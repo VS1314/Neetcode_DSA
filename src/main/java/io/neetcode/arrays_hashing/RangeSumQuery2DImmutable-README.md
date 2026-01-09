@@ -563,3 +563,220 @@ IF YOU REMEMBER ONLY ONE THING
 
 👉 Prefix sum = precomputed area sums
 👉 Query = include big, exclude extras, fix overlap
+
+class NumMatrix {
+
+    private int[][] prefix;
+
+    public NumMatrix(int[][] matrix) {
+        int row = matrix.length;
+        int col = matrix[0].length;
+        prefix = new int[row][col];
+        for(int r = 0; r<row; r++){
+            int preSum = 0;
+            for(int c = 0; c<col;c++){
+                preSum+=matrix[r][c]+prefix[r-1][c]+prefix[r][c-1]-prefix[r-1][c-1];
+                prefix[r][c] = preSum;
+            }
+        }
+    } is this part right?
+
+You’re very close, but this constructor is not correct.
+Let’s slow it down and fix it step by step, with clear intuition + dry run.
+
+1️⃣ What prefix[r][c] is SUPPOSED to mean
+
+prefix[r][c] = sum of all elements from (0,0) to (r,c)
+
+Visual:
+
+(0,0) -------- (0,c)
+|               |
+|               |
+(r,0) -------- (r,c)
+
+2️⃣ Correct formula (IMPORTANT)
+
+For 0-based indexing:
+
+prefix[r][c] =
+matrix[r][c]
++ prefix[r-1][c]     (top)
++ prefix[r][c-1]     (left)
+- prefix[r-1][c-1]   (overlap)
+
+
+But ⚠️ only if r > 0 and c > 0
+Otherwise you must handle borders.
+
+3️⃣ What is WRONG in your code
+❌ Problem 1: Array index out of bounds
+prefix[r-1][c]
+prefix[r][c-1]
+prefix[r-1][c-1]
+
+
+When:
+
+r == 0 → r-1 = -1 ❌
+
+c == 0 → c-1 = -1 ❌
+
+This will crash.
+
+❌ Problem 2: preSum logic is incorrect
+
+You wrote:
+
+preSum += matrix[r][c] + prefix[r-1][c] + prefix[r][c-1] - prefix[r-1][c-1];
+prefix[r][c] = preSum;
+
+
+❌ This double counts values
+Prefix sum is NOT cumulative row sum + prefix formula.
+
+4️⃣ Correct Constructor (SAFE & CLEAN)
+✅ Best and simplest way
+class NumMatrix {
+
+    private int[][] prefix;
+
+    public NumMatrix(int[][] matrix) {
+        int row = matrix.length;
+        int col = matrix[0].length;
+
+        prefix = new int[row][col];
+
+        for (int r = 0; r < row; r++) {
+            for (int c = 0; c < col; c++) {
+                int top = (r > 0) ? prefix[r - 1][c] : 0;
+                int left = (c > 0) ? prefix[r][c - 1] : 0;
+                int topLeft = (r > 0 && c > 0) ? prefix[r - 1][c - 1] : 0;
+
+                prefix[r][c] = matrix[r][c] + top + left - topLeft;
+            }
+        }
+    }
+}
+
+5️⃣ FULL DRY RUN (Simple Example)
+Matrix:
+1 2
+3 4
+
+Step-by-step:
+r=0, c=0
+prefix[0][0] = 1 + 0 + 0 - 0 = 1
+
+r=0, c=1
+prefix[0][1] = 2 + 0 + 1 - 0 = 3
+
+r=1, c=0
+prefix[1][0] = 3 + 1 + 0 - 0 = 4
+
+r=1, c=1
+prefix[1][1] = 4 + 3 + 4 - 1 = 10
+
+Final prefix matrix:
+1   3
+4  10
+
+6️⃣ Why sumRegion becomes O(1)
+
+Formula:
+
+sum =
+prefix[row2][col2]
+- prefix[row1-1][col2]
+- prefix[row2][col1-1]
++ prefix[row1-1][col1-1]
+
+
+Only 4 array lookups → O(1) 🔥
+
+7️⃣ Key takeaway (remember this!)
+
+❌ Don’t use preSum for 2D prefix
+
+✅ Each cell is independent
+
+✅ Always guard r-1 and c-1
+
+public int sumRegion(int row1, int col1, int row2, int col2) {
+return int sum = prefix[row2][col2]-prefix[row1-1][col2]
+-prefix[row1][col1-1]+prefix[row1-1][col1-1];
+}is this part right?
+
+Good question — almost right idea, but this code is NOT correct ❌
+There are 2 clear problems. Let’s fix them calmly.
+
+❌ Problem 1: Java syntax error
+
+You cannot declare a variable inside return.
+
+❌ Your code
+return int sum = ...
+
+✅ Correct syntax
+
+Either:
+
+return expression;
+
+
+or
+
+int sum = expression;
+return sum;
+
+❌ Problem 2: Index out-of-bounds risk
+
+When:
+
+row1 == 0 → row1 - 1 = -1
+
+col1 == 0 → col1 - 1 = -1
+
+That will crash your program.
+
+✅ Correct sumRegion (0-based prefix matrix)
+public int sumRegion(int row1, int col1, int row2, int col2) {
+int total = prefix[row2][col2];
+int top = (row1 > 0) ? prefix[row1 - 1][col2] : 0;
+int left = (col1 > 0) ? prefix[row2][col1 - 1] : 0;
+int topLeft = (row1 > 0 && col1 > 0) ? prefix[row1 - 1][col1 - 1] : 0;
+
+    return total - top - left + topLeft;
+}
+
+🧠 Why this works (very important intuition)
+total      -> full big rectangle
+top        -> remove extra top area
+left       -> remove extra left area
+topLeft    -> added twice → add back once
+
+
+This is inclusion–exclusion principle.
+
+🔍 Quick Dry Run (Simple)
+Prefix matrix:
+1   3
+4  10
+
+Query:
+sumRegion(1, 0, 1, 1)  // elements: 3 + 4 = 7
+
+
+Calculation:
+
+total    = prefix[1][1] = 10
+top      = prefix[0][1] = 3
+left     = 0
+topLeft  = 0
+
+result = 10 - 3 = 7 ✅
+
+⭐ Interview Tip
+
+If you want cleaner code, use 1-based prefix (no if-conditions).
+I can show that version too — just ask.
