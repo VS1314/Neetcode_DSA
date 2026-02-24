@@ -1,0 +1,73 @@
+package io.neetcode.linkedlist;
+
+public class DesignCircularQueue {
+
+    class MyCircularQueue {
+        class Node {
+            int val;
+            Node next;
+
+            Node(int val) {
+                this.val = val;
+            }
+        }
+
+        private int capacity;
+        private int count;
+        private Node head, tail;
+
+        public MyCircularQueue(int k) {
+            this.capacity = k;
+            this.count = 0;
+            this.head = null;
+            this.tail = null;
+        }
+
+        public boolean enQueue(int value) {
+            if (isFull()) return false;
+            Node curr = new Node(value);
+            if (isEmpty()) head = tail = curr;
+            else {
+                tail.next = curr;
+                tail = curr;
+            }
+            count++;
+            return true;
+        }
+
+        public boolean deQueue() {
+            if (isEmpty()) return false;
+            head = head.next;
+            count--;
+            if (isEmpty()) tail = null;
+            return true;
+        }
+
+        public int Front() {
+            return isEmpty() ? -1 : head.val;
+        }
+
+        public int Rear() {
+            return isEmpty() ? -1 : tail.val;
+        }
+
+        public boolean isEmpty() {
+            return count == 0;
+        }
+
+        public boolean isFull() {
+            return count == capacity;
+        }
+    }
+
+/**
+ * Your MyCircularQueue object will be instantiated and called as such:
+ * MyCircularQueue obj = new MyCircularQueue(k);
+ * boolean param_1 = obj.enQueue(value);
+ * boolean param_2 = obj.deQueue();
+ * int param_3 = obj.Front();
+ * int param_4 = obj.Rear();
+ * boolean param_5 = obj.isEmpty();
+ * boolean param_6 = obj.isFull();
+ */
+}
