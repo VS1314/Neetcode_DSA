@@ -1,595 +1,490 @@
-This problem is not about memorizing code, it’s about understanding design choices. I’ll explain each solution one by one, with:
+﻿# Design HashSet
+## Problem Description
+**Difficulty**: Easy
 
-• Idea / pattern
-• How add / remove / contains work
-• Why time & space are what they are
-• When to use / not use in interviews
-
-I’ll also tell you which one is best for interviews at the end.
-
-🧠 First: What is this problem REALLY testing?
-
-This is NOT a trick question.
-
-It tests:
-
-Do you understand what a HashSet is internally?
-
-Can you trade space vs time?
-
-Can you handle collisions?
-
-1️⃣ Brute Force (List-based Set)
-🔹 Idea
-
-Use a simple list and manually enforce uniqueness.
-
-List<Integer> data;
-
-🔹 How operations work
-
-add(key)
-
-Check if key already exists → contains()
-
-If not → add to list
-
-remove(key)
-
-Remove element from list
-
-contains(key)
-
-Scan entire list
-
-🔹 Time Complexity
-Operation	Time
-add	O(n)
-remove	O(n)
-contains	O(n)
-
-Because ArrayList scans linearly.
-
-🔹 Space Complexity
-O(n) → number of stored elements
-
-🔹 Pros
-
-✅ Very easy
-✅ Good for understanding baseline
-
-🔹 Cons
-
-❌ No hashing
-❌ Slow
-❌ Not scalable
-
-🎯 Interview verdict
-
-❌ Only acceptable as a starting explanation, not final solution.
-
-2️⃣ Boolean Array (Direct Addressing)
-🔹 Idea
-
-Keys are limited to [0, 1_000_000], so:
-
-👉 Use index = key
-
-boolean[] data = new boolean[1000001];
-
-🔹 How operations work
-
-add(key)
-
-data[key] = true;
-
-
-remove(key)
-
+Design a HashSet without using any built-in hash table libraries.
+Implement the `MyHashSet` class:
+- `MyHashSet()` - Initializes the object with an empty set.
+- `void add(int key)` - Inserts the value key into the HashSet.
+- `bool contains(int key)` - Returns whether the value key exists in the HashSet or not.
+- `void remove(int key)` - Removes the value key in the HashSet. If key does not exist in the HashSet, do nothing.
+## Examples
+### Example 1:
+```
+Input:
+["MyHashSet", "add", "add", "contains", "contains", "add", "contains", "remove", "contains"]
+[[], [1], [2], [1], [3], [2], [2], [2], [2]]
+Output:
+[null, null, null, true, false, null, true, null, false]
+Explanation:
+MyHashSet myHashSet = new MyHashSet();
+myHashSet.add(1);      // set = [1]
+myHashSet.add(2);      // set = [1, 2]
+myHashSet.contains(1); // return True
+myHashSet.contains(3); // return False, (not found)
+myHashSet.add(2);      // set = [1, 2]
+myHashSet.contains(2); // return True
+myHashSet.remove(2);   // set = [1]
+myHashSet.contains(2); // return False, (already removed)
+```
+## Constraints
+- 0 <= key <= 1,000,000
+- At most 10,000 calls will be made to add, remove, and contains
+---
+## Pattern Recognition
+**Primary Pattern**: **Array of Linked Lists (Separate Chaining) / Direct Addressing**
+**Why This Pattern?**
+- Need O(1) average time for add, remove, contains operations
+- Hash collisions must be handled (unless using direct addressing)
+- No built-in hash table allowed
+- Key range is bounded [0, 1,000,000]
+**Key Insight**: Two main approaches - (1) Direct addressing if space allows, or (2) Hashing with separate chaining for space efficiency.
+**Related Patterns**:
+1. **Design HashMap** - Similar but with key-value pairs
+2. **Bit Manipulation** - Ultra space-efficient variant
+3. **Hash Table Design** - General hash collision resolution
+---
+## Algorithm & Approach
+### Core Insight
+A HashSet fundamentally needs:
+1. **Storage** - Way to store keys
+2. **Fast Lookup** - O(1) contains operation
+3. **Uniqueness** - No duplicate keys
+**Design Choice Trade-offs:**
+- **Direct Addressing**: O(1) time, O(max_key) space
+- **Hashing**: O(1) average time, O(n) space
+- **Bit Manipulation**: O(1) time, O(max_key/32) space
+### Step-by-Step Algorithm
+#### **Approach 1: Brute Force - ArrayList**
+```
+Data Structure: List<Integer>
+add(key):
+  1. If not contains(key)
+     2. Add to list
+contains(key):
+  1. Scan entire list
+  2. Return true if found
+remove(key):
+  1. Find and remove from list
+```
+**Code Implementation**
+```java
+class MyHashSet {
+    private List<Integer> data;
+    public MyHashSet() {
+        data = new ArrayList<>();
+    }
+    public void add(int key) {
+        if (!contains(key)) {
+            data.add(key);
+        }
+    }
+    public boolean contains(int key) {
+        return data.contains(key);
+    }
+    public void remove(int key) {
+        data.remove(Integer.valueOf(key));
+    }
+}
+```
+**Complexity Analysis**
+- **Time Complexity**: O(n) for all operations
+- **Space Complexity**: O(n)
+**Why Not Optimal?** Too slow - defeats the purpose of a HashSet.
+#### **Approach 2: Boolean Array - Direct Addressing (SIMPLE & OPTIMAL)**
+```
+Data Structure: boolean[1_000_001]
+add(key):
+  1. data[key] = true
+contains(key):
+  1. return data[key]
+remove(key):
+  1. data[key] = false
+```
+**Code Implementation**
+```java
+class MyHashSet {
+    private boolean[] data;
+    public MyHashSet() {
+        data = new boolean[1_000_001];
+    }
+    public void add(int key) {
+        data[key] = true;
+    }
+    public boolean contains(int key) {
+        return data[key];
+    }
+    public void remove(int key) {
+        data[key] = false;
+    }
+}
+```
+**Complexity Analysis**
+- **Time Complexity**: O(1) for all operations - truly constant!
+- **Space Complexity**: O(1,000,000) - fixed, independent of n
+**Why This Works**: Key range is bounded, so we can use index = key directly.
+#### **Approach 3: Linked List + Hashing - Separate Chaining (SPACE EFFICIENT)**
+```
+Data Structure: ListNode[BUCKET_SIZE]
+Hash Function: key % BUCKET_SIZE
+add(key):
+  1. index = hash(key)
+  2. If key not in bucket[index]:
+     3. Add to linked list
+contains(key):
+  1. index = hash(key)
+  2. Search linked list at bucket[index]
+remove(key):
+  1. index = hash(key)
+  2. Remove from linked list at bucket[index]
+```
+**Code Implementation**
+```java
+class MyHashSet {
+    class Node {
+        int key;
+        Node next;
+        Node(int key) {
+            this.key = key;
+            this.next = null;
+        }
+    }
+    private final int BUCKET_SIZE = 10000;
+    private Node[] buckets;
+    public MyHashSet() {
+        buckets = new Node[BUCKET_SIZE];
+    }
+    private int hash(int key) {
+        return key % BUCKET_SIZE;
+    }
+    public void add(int key) {
+        int index = hash(key);
+        if (buckets[index] == null) {
+            buckets[index] = new Node(key);
+            return;
+        }
+        Node current = buckets[index];
+        // Check if key already exists
+        while (current != null) {
+            if (current.key == key) {
+                return;  // Already exists
+            }
+            if (current.next == null) {
+                break;
+            }
+            current = current.next;
+        }
+        // Add new node at end
+        current.next = new Node(key);
+    }
+    public boolean contains(int key) {
+        int index = hash(key);
+        Node current = buckets[index];
+        while (current != null) {
+            if (current.key == key) {
+                return true;
+            }
+            current = current.next;
+        }
+        return false;
+    }
+    public void remove(int key) {
+        int index = hash(key);
+        if (buckets[index] == null) {
+            return;
+        }
+        // Special case: head node
+        if (buckets[index].key == key) {
+            buckets[index] = buckets[index].next;
+            return;
+        }
+        Node current = buckets[index];
+        while (current.next != null) {
+            if (current.next.key == key) {
+                current.next = current.next.next;
+                return;
+            }
+            current = current.next;
+        }
+    }
+}
+```
+**Complexity Analysis**
+- **Time Complexity**: O(1) average, O(n) worst case
+- **Space Complexity**: O(n + BUCKET_SIZE)
+#### **Approach 4: Bit Manipulation - BitSet (MOST SPACE EFFICIENT)**
+```
+Data Structure: int[31251]  // 1,000,000 / 32 + 1
+Each int stores 32 keys using bits
+add(key):
+  1. index = key / 32
+  2. bit = key % 32
+  3. data[index] |= (1 << bit)
+contains(key):
+  1. index = key / 32
+  2. bit = key % 32
+  3. return (data[index] & (1 << bit)) != 0
+remove(key):
+  1. index = key / 32
+  2. bit = key % 32
+  3. data[index] &= ~(1 << bit)
+```
+**Code Implementation**
+```java
+class MyHashSet {
+    private int[] data;
+    public MyHashSet() {
+        data = new int[31251];  // 1,000,000 / 32 + 1
+    }
+    public void add(int key) {
+        int index = key / 32;
+        int bit = key % 32;
+        data[index] |= (1 << bit);
+    }
+    public boolean contains(int key) {
+        int index = key / 32;
+        int bit = key % 32;
+        return (data[index] & (1 << bit)) != 0;
+    }
+    public void remove(int key) {
+        int index = key / 32;
+        int bit = key % 32;
+        data[index] &= ~(1 << bit);
+    }
+}
+```
+**Complexity Analysis**
+- **Time Complexity**: O(1) for all operations
+- **Space Complexity**: O(1,000,000 / 32) ≈ O(31,251 integers) - 32x more space efficient!
+---
+## Why This Strategy?
+### Problem Requirements Analysis
+| Approach | Time | Space | Complexity | Best For |
+|----------|------|-------|------------|----------|
+| ArrayList | O(n) | O(n) | Low | ❌ Never |
+| **Boolean Array** | **O(1)** | **O(10^6)** | **Low** | **✅ Interviews** |
+| Separate Chaining | O(1) avg | O(n) | Medium | Production code |
+| **BitSet** | **O(1)** | **O(10^6/32)** | **High** | **Space-critical** |
+**Winner for Interviews**: Boolean Array - simplest code, true O(1), easy to explain!
+**Winner for Production**: Separate Chaining - space efficient, scales well
+### Why Boolean Array is Best for This Problem?
+- Key range is bounded [0, 1,000,000]
+- Direct addressing gives true O(1) time
+- Simple implementation with no edge cases
+- Space is acceptable for modern systems
+### When to Use Each Approach?
+**Boolean Array:**
+- ✅ Key range is small/known
+- ✅ Interview setting
+- ✅ Simplicity matters
+**Separate Chaining:**
+- ✅ Key range is huge/unknown
+- ✅ Space matters
+- ✅ Real-world applications
+**BitSet:**
+- ✅ Ultra space-critical
+- ✅ Advanced interview (bonus points)
+- ⚠️ More error-prone
+---
+## Critical Edge Cases & Gotchas
+### 1. **Add Duplicate Key**
+```java
+set.add(1);
+set.add(1);  // Should not create duplicate
+```
+### 2. **Remove Non-Existent Key**
+```java
+set.remove(99);  // Should not crash, just do nothing
+```
+### 3. **Contains After Remove**
+```java
+set.add(1);
+set.remove(1);
+set.contains(1);  // Should return false
+```
+### 4. **Boundary Values**
+```java
+set.add(0);          // Minimum key
+set.add(1_000_000);  // Maximum key
+```
+### 5. **Empty Set Operations**
+```java
+MyHashSet set = new MyHashSet();
+set.contains(5);  // Should return false
+set.remove(5);    // Should not crash
+```
+### 6. **Hash Collision (Separate Chaining)**
+```java
+// Keys 1 and 10001 hash to same bucket (1 % 10000 = 1)
+set.add(1);
+set.add(10001);
+set.contains(1);      // Should return true
+set.contains(10001);  // Should return true
+```
+---
+## Major Areas Where We Might Go Wrong
+### ❌ **MISTAKE 1: Adding Duplicates in Separate Chaining**
+```java
+// WRONG - Doesn't check for duplicates!
+public void add(int key) {
+    int index = hash(key);
+    Node newNode = new Node(key);
+    newNode.next = buckets[index];
+    buckets[index] = newNode;  // Always adds, even if exists!
+}
+```
+**Why wrong**: Creates multiple nodes with same key.
+**Fix**: Check if key exists first
+```java
+// CORRECT
+if (contains(key)) {
+    return;
+}
+// Then add
+```
+### ❌ **MISTAKE 2: Array Out of Bounds (Boolean Array)**
+```java
+// WRONG - Array too small!
+boolean[] data = new boolean[1_000_000];  // Should be 1_000_001!
+data[1_000_000] = true;  // ArrayIndexOutOfBoundsException!
+```
+**Why wrong**: Keys range from 0 to 1,000,000 inclusive (needs 1,000,001 slots).
+**Fix**: Size should be 1_000_001
+### ❌ **MISTAKE 3: Bit Shift Overflow**
+```java
+// WRONG - Bit shift overflow!
+public void add(int key) {
+    int bit = key % 32;
+    data[0] |= (1 << bit);  // What if key > 32?
+}
+```
+**Why wrong**: Didn't calculate index, always uses data[0].
+**Fix**: Calculate index = key / 32
+### ❌ **MISTAKE 4: Not Handling Empty Bucket in Remove**
+```java
+// WRONG - NullPointerException!
+public void remove(int key) {
+    int index = hash(key);
+    if (buckets[index].key == key) {  // buckets[index] might be null!
+        buckets[index] = buckets[index].next;
+    }
+}
+```
+**Why wrong**: Bucket might be empty (null).
+**Fix**: Check for null first
+```java
+// CORRECT
+if (buckets[index] == null) {
+    return;
+}
+```
+### ❌ **MISTAKE 5: Wrong Boolean Array Removal**
+```java
+// WRONG - Doesn't remove!
+public void remove(int key) {
+    data[key] = null;  // Can't set boolean to null!
+}
+```
+**Why wrong**: boolean can only be true or false, not null.
+**Fix**: Set to false
+```java
+// CORRECT
 data[key] = false;
-
-
-contains(key)
-
-return data[key];
-
-🔹 Time Complexity
-O(1) for all operations
-
-🔹 Space Complexity
-O(1,000,000)
-
-
-Uses memory even if only 1 element exists.
-
-🔹 Pros
-
-✅ Fastest possible
-✅ Very simple
-
-🔹 Cons
-
-❌ Wastes memory
-❌ Only works when key range is known & small
-
-🎯 Interview verdict
-
-✅ Excellent if constraints allow
-Say:
-
-“Since key range is bounded, direct addressing is optimal.”
-
-3️⃣ Linked List + Hashing (Separate Chaining)
-🔹 Idea
-
-This is a REAL HashSet implementation.
-
-Use an array of buckets
-
-Each bucket = Linked List
-
-Handle collisions via chaining
-
-ListNode[] set = new ListNode[10000];
-index = key % 10000;
-
-🔹 Why modulo?
-
-Maps large keys into limited buckets.
-
-🔹 How operations work
-
-add(key)
-
-Go to bucket
-
-Traverse linked list
-
-Add only if not found
-
-remove(key)
-
-Traverse
-
-Remove node
-
-contains(key)
-
-Traverse list and check
-
-🔹 Time Complexity
-
-Average:
-
-O(n / k)
-
-
-Worst:
-
-O(n)
-
-
-Where:
-
-n = elements
-
-k = buckets (10000)
-
-🔹 Space Complexity
-O(k + n)
-
-🔹 Pros
-
-✅ Real-world hashing
-✅ Memory efficient
-✅ Scales well
-
-🔹 Cons
-
-❌ Slightly complex
-❌ Worst case still linear
-
-🎯 Interview verdict
-
-✅ BEST answer if interviewer wants internal HashSet design
-
-4️⃣ Binary Search Tree in Buckets
-🔹 Idea
-
-Same hashing as solution 3, but:
-
-Each bucket is a BST instead of LinkedList
-
-Why?
-👉 Faster search inside buckets.
-
-🔹 How operations work
-
-Hash key → bucket index
-
-Insert/search/delete in BST
-
-🔹 Time Complexity
-
-Average:
-
-O(log (n / k))
-
-
-Worst (skewed BST):
-
-O(n)
-
-🔹 Space Complexity
-O(k + n)
-
-🔹 Pros
-
-✅ Faster than linked list in collisions
-
-🔹 Cons
-
-❌ Overkill
-❌ BST balancing not guaranteed
-❌ Complex
-
-🎯 Interview verdict
-
-⚠️ Rarely needed
-Mention only if asked about optimization.
-
-5️⃣ Bit Manipulation (BitSet)
-🔹 Idea
-
-Store presence of numbers using bits instead of booleans.
-
-Each int stores 32 values.
-
-int[] set = new int[31251];
-
-🔹 How it works
-
-For key:
-
-index = key / 32
-
-bit position = key % 32
-
-add
-
-set[index] |= (1 << bit);
-
-
-remove
-
-set[index] &= ~(1 << bit);
-
-
-contains
-
-(set[index] & (1 << bit)) != 0
-
-🔹 Time Complexity
-O(1)
-
-🔹 Space Complexity
-~31251 integers ≈ very memory efficient
-
-🔹 Pros
-
-✅ Extremely memory efficient
-✅ Very fast
-
-🔹 Cons
-
-❌ Hard to understand
-❌ Error-prone
-❌ Only works for bounded keys
-
-🎯 Interview verdict
-
-🔥 Advanced answer
-Great if interviewer likes low-level optimization.
-
-🏆 FINAL COMPARISON
-Solution	Interview Use
-Brute Force	❌ Only baseline
-Boolean Array	✅ Best if key range known
-Linked List Hashing	⭐ BEST GENERAL ANSWER
-BST Buckets	⚠️ Optional
-Bit Manipulation	🔥 Advanced / bonus
-🎤 What YOU should say in interviews
-Safe & impressive answer:
-
-“I’ll use hashing with separate chaining using linked lists to handle collisions. This gives average O(1) operations and models how real hash sets work.”
-
-If constraints allow:
-
-“Since the key range is bounded, direct addressing using a boolean array gives O(1) time.”
-
-Perfect 👍
-Now we’ll do this slow, visual, and practical.
-I’ll explain EACH solution with a DRY RUN using the same example so your brain can see what’s happening.
-
-We’ll use this input everywhere 👇
-
-Operations:
-add(1), add(2), contains(1), contains(3), remove(2), contains(2)
-
-1️⃣ Brute Force (ArrayList)
-Data Structure
-List<Integer> data = []
-
-▶ add(1)
-
-data.contains(1)? ❌
-
-add 1
-
-data = [1]
-
-▶ add(2)
-
-data.contains(2)? ❌
-
-add 2
-
-data = [1, 2]
-
-▶ contains(1)
-
-scan list: [1, 2]
-
-found → ✅ true
-
-▶ contains(3)
-
-scan list: [1, 2]
-
-not found → ❌ false
-
-▶ remove(2)
-
-scan list
-
-remove 2
-
-data = [1]
-
-▶ contains(2)
-
-scan list: [1]
-
-not found → ❌ false
-
-⏱ Time intuition
-
-Every operation scans the list → slow when list grows.
-
-2️⃣ Boolean Array (Direct Addressing)
-Data Structure
-boolean[] data = new boolean[1000001];
-(all false initially)
-
-▶ add(1)
+```
+---
+## Complexity Analysis
+### Time Complexity
+| Approach | add() | contains() | remove() |
+|----------|-------|------------|----------|
+| ArrayList | O(n) | O(n) | O(n) |
+| **Boolean Array** | **O(1)** | **O(1)** | **O(1)** |
+| Separate Chaining | O(1) avg, O(n) worst | O(1) avg, O(n) worst | O(1) avg, O(n) worst |
+| **BitSet** | **O(1)** | **O(1)** | **O(1)** |
+### Space Complexity
+| Approach | Space | Notes |
+|----------|-------|-------|
+| ArrayList | O(n) | n = number of keys added |
+| Boolean Array | O(1,000,001) | Fixed size |
+| Separate Chaining | O(n + buckets) | Scales with usage |
+| BitSet | O(31,251) | 1,000,000 / 32, most efficient! |
+---
+## Visualization
+### Example: Boolean Array Approach
+```
+Operations: add(1), add(2), contains(1), contains(3), remove(2), contains(2)
+Initial: data = [false, false, false, false, ...]
+add(1):
 data[1] = true
-
-▶ add(2)
+data = [false, true, false, false, ...]
+add(2):
 data[2] = true
-
-▶ contains(1)
-data[1] → true
-
-▶ contains(3)
-data[3] → false
-
-▶ remove(2)
+data = [false, true, true, false, ...]
+contains(1):
+return data[1] = true ✓
+contains(3):
+return data[3] = false ✗
+remove(2):
 data[2] = false
-
-▶ contains(2)
-data[2] → false
-
-🧠 Key realization
-
-No searching.
-Index = key → fastest possible.
-
-3️⃣ Linked List + Hashing (Separate Chaining)
-Data Structure
-ListNode[] set = new ListNode[10000]
-
-
-Each index has a dummy head node.
-
-Hash function:
-
-index = key % 10000
-
-▶ add(1)
+data = [false, true, false, false, ...]
+contains(2):
+return data[2] = false ✗
+```
+### Example: Separate Chaining with Collisions
+```
+BUCKET_SIZE = 10000
+Operations: add(1), add(10001), contains(1)
+add(1):
 index = 1 % 10000 = 1
-
-
-Bucket 1 before:
-
-[HEAD] -> null
-
-
-Add node:
-
-[HEAD] -> 1 -> null
-
-▶ add(2)
-index = 2
-
-
-Bucket 2:
-
-[HEAD] -> 2 -> null
-
-▶ contains(1)
+buckets[1] = [1] -> null
+add(10001):
+index = 10001 % 10000 = 1  (collision!)
+buckets[1] = [1] -> [10001] -> null
+contains(1):
 index = 1
-Traverse bucket:
-HEAD → 1 → FOUND
-
-
-✅ true
-
-▶ contains(3)
-index = 3
-Bucket empty
-
-
-❌ false
-
-▶ remove(2)
-index = 2
-Traverse:
-HEAD → 2 → remove
-
-
-Bucket 2 becomes:
-
-[HEAD] -> null
-
-▶ contains(2)
-index = 2
-Bucket empty
-
-
-❌ false
-
-🧠 Why this works
-
-Hashing spreads values
-
-Linked list handles collisions
-
-Average case = short list = fast
-
-4️⃣ Binary Search Tree in Buckets
-Data Structure
-BST[] buckets = new BST[10000]
-
-
-Each bucket is a BST, not a list.
-
-▶ add(1)
-index = 1
-BST at bucket[1]:
-1
-
-▶ add(2)
-index = 2
-BST at bucket[2]:
-2
-
-▶ contains(1)
-Search BST at bucket[1]
-Found 1
-
-
-✅ true
-
-▶ contains(3)
-Search BST at bucket[3]
-BST empty
-
-
-❌ false
-
-▶ remove(2)
-Delete node 2 from BST at bucket[2]
-
-▶ contains(2)
-BST empty
-
-
-❌ false
-
-🧠 Why use BST?
-
-If many values collide into one bucket:
-
-Linked list → O(n)
-
-BST → O(log n)
-
-5️⃣ Bit Manipulation (BitSet)
-Data Structure
-int[] set = new int[31251]
-Each int = 32 bits
-
-▶ add(1)
-index = 1 / 32 = 0
-bit = 1 % 32 = 1
-
-
-Before:
-
-set[0] = 00000000
-
-
-After:
-
-set[0] = 00000010
-
-▶ add(2)
-index = 0
-bit = 2
-
-set[0] = 00000110
-
-▶ contains(1)
-set[0] & (1 << 1) ≠ 0
-
-
-✅ true
-
-▶ contains(3)
-set[0] & (1 << 3) == 0
-
-
-❌ false
-
-▶ remove(2)
-toggle bit 2
-
-set[0] = 00000010
-
-▶ contains(2)
-bit not set
-
-
-❌ false
-
-🧠 Why this is powerful
-
-32 numbers in 1 integer
-
-Ultra memory-efficient
-
-O(1) always
-
-🧠 BIG PICTURE (How to recognize pattern)
-
-When you see:
-
-“Design HashSet without built-in libraries”
-
-Ask yourself:
-
-1️⃣ Is key range bounded?
-→ Boolean / Bitset
-
-2️⃣ Need real hash behavior?
-→ Buckets + Linked List
-
-3️⃣ Heavy collisions expected?
-→ BST buckets
-
-4️⃣ Simple baseline?
-→ List
-
-🔑 One-liner interview summary
-
-“I’ll use hashing with separate chaining using linked lists to handle collisions, achieving O(1) average time for add, remove, and contains.”
+Search buckets[1]: [1] ✓ Found!
+return true
+```
+---
+## Comparison of Approaches
+| Approach | Time | Space | Code Complexity | Interview Score |
+|----------|------|-------|-----------------|-----------------|
+| ArrayList | O(n) | O(n) | Low | ❌ Poor |
+| **Boolean Array** | **O(1)** | **O(10^6)** | **Very Low** | **✅ Excellent** |
+| Separate Chaining | O(1) avg | O(n) | Medium | ✅ Good |
+| BitSet | O(1) | O(10^6/32) | High | 🔥 Advanced |
+**Best for Interviews**: Boolean Array ✓
+---
+## Key Takeaways
+1. **Bounded Keys**: When key range is known and small, direct addressing wins
+2. **Boolean Array**: Simplest O(1) solution for this problem
+3. **Separate Chaining**: Better when key range is huge or unknown
+4. **BitSet**: 32x space savings with same O(1) time
+5. **Trade-offs**: Time vs Space vs Code Complexity
+6. **Interview Strategy**: Start with boolean array, mention alternatives
+---
+## Interview Tips
+**What to say in an interview:**
+> "Since the key range is bounded [0, 1,000,000], I'll use direct addressing with a boolean array. This gives true O(1) time for all operations with straightforward implementation. Each index represents a key - if data[key] is true, the key exists in the set. This uses O(1,000,000) space which is acceptable and gives the simplest, fastest solution."
+**Key points to mention:**
+1. **Pattern**: Direct addressing for bounded keys
+2. **Why boolean array**: Key range is known, need O(1) operations
+3. **Complexity**: O(1) time, O(1,000,000) space
+4. **Alternative**: Can mention separate chaining for unbounded keys
+**If asked about space optimization:**
+> "If space is critical, I can use bit manipulation with an int array of size 31,251. Each integer stores 32 keys using bits, reducing space by 32x while keeping O(1) time. However, the boolean array is simpler and space is acceptable for this problem size."
+**If asked about real-world implementation:**
+> "In production with unbounded keys, I'd use separate chaining with linked lists or balanced trees in each bucket, like Java's actual HashSet implementation. But for this problem with bounded keys, direct addressing is optimal."
+---
+## Related Problems
+| Problem | Difficulty | Pattern | Key Difference |
+|---------|-----------|---------|----------------|
+| **Design HashSet** | Easy | **Direct Addressing / Hashing** | **No values, only keys** ← This problem |
+| Design HashMap | Easy | Hashing | Key-value pairs |
+| Design Linked HashSet | Medium | HashMap + DLL | Maintains insertion order |
+| LFU Cache | Hard | Multiple data structures | Frequency tracking |
+| Design Twitter | Medium | HashMap + Timeline | Complex relationships |
+**Pattern Family**: Data Structure Design - Hash-based Storage
+---
+## Final Pattern Label
+✅ **Direct Addressing – Boolean Array for Bounded Key Range**
+**Remember:** When key range is bounded and known → think direct addressing (index = key) for simplest O(1) solution!
