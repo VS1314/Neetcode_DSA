@@ -248,13 +248,14 @@ class Solution {
 
 Input: root = [1,2,3,4,5]
 
-```
 Tree:
+```
         1
        / \
       2   3
      / \
     4   5
+```
 
 Execution Steps:
 
@@ -279,7 +280,6 @@ Execution Steps:
 | 17 | - | [] | Stack empty, done | [4,2,5,1,3] |
 
 Output: [4,2,5,1,3]
-```
 
 **Complexity Analysis**
 - **Time Complexity**: O(n) - Visit each node exactly once
