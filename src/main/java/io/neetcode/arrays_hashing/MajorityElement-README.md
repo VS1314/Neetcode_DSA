@@ -35,26 +35,41 @@ Explanation: Only one element, which is the majority
 - 1 <= nums.length <= 5 * 10^4
 - -10^9 <= nums[i] <= 10^9
 
-**Follow-up:** Could you solve the problem in linear time and in O(1) space?
+- Follow-up: Could you solve in **O(n) time** and **O(1) space**?
 
 ---
 
 ## Pattern Recognition
 
-**Primary Pattern**: **Boyer-Moore Voting Algorithm (Optimal) / HashMap Frequency Counting**
+**Primary Pattern**: **Boyer-Moore Voting Algorithm**
 
 **Why This Pattern?**
-- Need to find element appearing > n/2 times
-- Follow-up requires O(n) time and O(1) space
-- Guaranteed that majority element exists
-- Key insight: Majority element appears more than all others combined
+- The majority element appears **more than all other elements combined** (> n/2 times)
+- This lets us "cancel" each majority vote against one non-majority vote — majority always survives
+- Only Boyer-Moore satisfies **both** O(n) time and O(1) space required by the follow-up
 
-**Key Insight**: If we pair each occurrence of the majority element with one occurrence of any other element and cancel them out, the majority element will still have occurrences left over.
+**Key Insight**:
+```
+Let M = count of majority element, O = count of all others combined
+    M + O = n   and   M > n/2
+    ∴ M > O
+
+Pair and cancel one M with one O → M always has leftover count.
+The last surviving candidate must be the majority element.
+```
+
+**Pattern Elimination:**
+
+| Pattern | Time | Space | Meets Follow-up? | Why |
+|---------|------|-------|-----------------|-----|
+| HashMap | O(n) | O(n) | ❌ | Extra space |
+| Sorting | O(n log n) | O(1) | ❌ | Too slow |
+| **Boyer-Moore** | ✅ O(n) | ✅ O(1) | **✅ Yes** | Optimal |
 
 **Related Patterns**:
-1. **Frequency Counting** - HashMap approach
-2. **Sorting** - Alternative approach
-3. **Randomization** - Probabilistic approach
+1. **Majority Element II** — Extended Boyer-Moore with 2 candidates (> n/3)
+2. **HashMap Frequency Count** — General frequency pattern (Valid Anagram, Top K)
+3. **Single Number** — XOR-based cancellation (same pairing/cancellation intuition)
 
 ---
 
@@ -62,487 +77,334 @@ Explanation: Only one element, which is the majority
 
 ### Core Insight
 
-**Critical Observation:** The majority element appears MORE than n/2 times.
+**The Cancellation Principle:**
 
-**What this means:**
-- In an array of 7 elements, majority must appear ≥ 4 times
-- In an array of 8 elements, majority must appear ≥ 5 times
-- The majority element always "wins" if we pit it against all others
-
-**Visual Example:**
 ```
-Array: [2,2,1,1,1,2,2]
-       M M O O O M M    (M = majority, O = other)
+Think of each element as a vote:
+  Majority element = positive votes (+1)
+  All other elements = negative votes (-1)
 
-Count: M appears 4 times, all others combined appear 3 times
-Result: M > others, so M wins!
+When running total (count) hits 0:
+  → Current lead is completely cancelled out
+  → Pick a fresh candidate
+
+Since M > O (majority > all others):
+  → After all cancellations, majority element always survives as the final candidate
 ```
 
-### Approach Comparison
-| Approach | Time | Space | Meets Follow-up? |
-|----------|------|-------|------------------|
-| HashMap | O(n) | O(n) | ❌ Space not O(1) |
-| Sorting | O(n log n) | O(1) | ❌ Time not O(n) |
-| **Boyer-Moore** | **O(n)** ✅ | **O(1)** ✅ | **✅ Optimal** |
+**Decision Flow:**
+```
+majorityElement(nums):
+    candidate = 0, count = 0
+
+    for each num in nums:
+        ├─ If count == 0  → candidate = num   (pick new candidate)
+        ├─ If num == candidate → count++      (support current candidate)
+        └─ If num != candidate → count--      (cancel one vote)
+
+    return candidate   (majority guaranteed → no verification needed)
+```
+
+### Visual Understanding
+
+```
+Array:  [2, 2, 1, 1, 1, 2, 2]
+         M  M  O  O  O  M  M    (M = majority=2, O = other)
+
+Pairing M against O (cancellations):
+  2 vs 1 → cancel
+  2 vs 1 → cancel
+  2 vs 1 → cancel
+  Remaining: [2, 2]  ← majority survives ✓
+```
+
+```
+Boyer-Moore trace — nums = [7,7,5,7,5,1,5,7,5,5,7,7,7]:
+
+ num | candidate | count | Action
+-----|-----------|-------|---------------------------
+  7  |     7     |   1   | count=0 → candidate=7, +1
+  7  |     7     |   2   | matches → +1
+  5  |     7     |   1   | no match → -1
+  7  |     7     |   2   | matches → +1
+  5  |     7     |   1   | no match → -1
+  1  |     7     |   0   | no match → -1
+  5  |     5     |   1   | count=0 → candidate=5, +1
+  7  |     5     |   0   | no match → -1
+  5  |     5     |   1   | count=0 → candidate=5, +1
+  5  |     5     |   2   | matches → +1
+  7  |     5     |   1   | no match → -1
+  7  |     5     |   0   | no match → -1
+  7  |     7     |   1   | count=0 → candidate=7, +1
+
+Final candidate: 7  (appears 7/13 times > 6.5) ✓
+```
+
+---
 
 ### Step-by-Step Algorithm
 
 #### **Approach 1: HashMap Frequency Counting**
 
-```
-1. Create HashMap to count frequencies
-2. For each element:
-   a. Increment its count
-   b. If count > n/2, return element
-3. Return any element (guaranteed to exist)
-```
+**Core Idea**:
+- Count each element's frequency using a HashMap
+- Return the element whose count exceeds n/2
 
 **Code Implementation**
 ```java
-public int majorityElement(int[] nums) {
-    HashMap<Integer, Integer> map = new HashMap<>();
-    int n = nums.length;
-    
-    for (int num : nums) {
-        map.put(num, map.getOrDefault(num, 0) + 1);
-        if (map.get(num) > n / 2) {
-            return num;
+class Solution {
+    public int majorityElement(int[] nums) {
+        HashMap<Integer, Integer> map = new HashMap<>();
+        int n = nums.length;
+
+        for (int num : nums) {
+            map.put(num, map.getOrDefault(num, 0) + 1);
+            if (map.get(num) > n / 2) {
+                return num;  // early exit once majority found
+            }
         }
+
+        return -1;  // unreachable — majority is guaranteed
     }
-    
-    return -1; // Never reached if majority exists
 }
 ```
 
 **Complexity Analysis**
-- **Time Complexity**: O(n) - single pass through array
-- **Space Complexity**: O(n) - HashMap stores frequencies
+- **Time Complexity**: O(n) — single pass
+- **Space Complexity**: O(n) — HashMap stores up to n entries
 
-**Pros:** Easy to understand, clear logic  
-**Cons:** Uses O(n) extra space, doesn't meet follow-up requirement
+---
 
 #### **Approach 2: Sorting**
 
-```
-1. Sort the array
-2. Return middle element (index n/2)
-```
+**Core Idea**:
+- After sorting, the majority element must occupy index `n/2` because it fills more than half the array
 
-**Why this works:**
-- Majority element appears > n/2 times
-- After sorting, it MUST occupy the middle position
-
-**Example:**
 ```
 [2,2,1,1,1,2,2] → sorted → [1,1,1,2,2,2,2]
-                           Index: 0 1 2 3 4 5 6
-                           Middle (n/2 = 3): nums[3] = 2 ✓
-```
-
-**Code Implementation**
-```java
-public int majorityElement(int[] nums) {
-    Arrays.sort(nums);
-    return nums[nums.length / 2];
-}
-```
-
-**Complexity Analysis**
-- **Time Complexity**: O(n log n) - sorting
-- **Space Complexity**: O(1) - in-place sort (or O(n) for some sort algorithms)
-
-**Pros:** Very simple, elegant  
-**Cons:** O(n log n) time doesn't meet follow-up requirement
-
-#### **Approach 3: Boyer-Moore Voting Algorithm (OPTIMAL)**
-```
-Phase 1: Find Candidate
-1. Initialize candidate = first element, count = 0
-2. For each element:
-   a. If count == 0, set candidate = current element
-   b. If element == candidate, count++
-   c. If element != candidate, count--
-3. Candidate is the potential majority element
-
-Phase 2: Verify (only needed if majority not guaranteed)
-1. Count occurrences of candidate
-2. If count > n/2, return candidate
-3. Else, no majority exists
-```
-
-**Note:** Phase 2 is NOT needed if problem guarantees majority exists!
-
-**How It Works - The Voting Analogy:**
-```
-Think of it as voting:
-- Each occurrence of an element is a vote
-- We pair votes: one for candidate, one against
-- When paired votes cancel (count = 0), switch candidate
-- The candidate left standing is the majority
+ Index:                      0  1  2  3  4  5  6
+                                    ↑ n/2 = 3 → nums[3] = 2 ✓
 ```
 
 **Code Implementation**
 ```java
 class Solution {
     public int majorityElement(int[] nums) {
-        int candidate = nums[0];
+        Arrays.sort(nums);
+        return nums[nums.length / 2];
+    }
+}
+```
+
+**Complexity Analysis**
+- **Time Complexity**: O(n log n) — sorting
+- **Space Complexity**: O(1) — in-place sort
+
+---
+
+#### **Approach 3: Boyer-Moore Voting Algorithm (OPTIMAL)**
+
+**Core Idea**:
+- Maintain `candidate` and `count`
+- When `count == 0` → switch to current element as new candidate
+- `+1` for a match, `-1` for a mismatch
+- The surviving candidate is the majority element
+
+**Code Implementation**
+```java
+class Solution {
+    public int majorityElement(int[] nums) {
+        int candidate = 0;
         int count = 0;
-        
-        // Phase 1: Find candidate
+
         for (int num : nums) {
             if (count == 0) {
-                candidate = num;
+                candidate = num;    // pick new candidate
             }
-            
-            if (num == candidate) {
-                count++;
-            } else {
-                count--;
-            }
+            count += (num == candidate) ? 1 : -1;
         }
-        
-        // Phase 2: Verify (not needed if majority guaranteed)
-        // int verifyCount = 0;
-        // for (int num : nums) {
-        //     if (num == candidate) verifyCount++;
-        // }
-        // return verifyCount > nums.length / 2 ? candidate : -1;
-        
-        return candidate;
+
+        return candidate;  // no verification needed — majority is guaranteed
     }
 }
 ```
 
-**Alternative - More Concise:**
-```java
-public int majorityElement(int[] nums) {
-    int candidate = 0, count = 0;
-    
-    for (int num : nums) {
-        if (count == 0) candidate = num;
-        count += (num == candidate) ? 1 : -1;
-    }
-    
-    return candidate;
-}
-```
+**Step-by-Step Trace:**
 
-### Understanding Boyer-Moore Voting
+Input: nums = [2,2,1,1,1,2,2]
 
-**Key Insight:** If we cancel out each occurrence of the majority element with one occurrence of any other element, the majority element will survive because it appears more than n/2 times.
+| i | num | count (before) | Action | candidate | count (after) |
+|---|-----|---------------|--------|-----------|---------------|
+| 0 | 2 | 0 | count=0 → candidate=2, +1 | 2 | 1 |
+| 1 | 2 | 1 | matches → +1 | 2 | 2 |
+| 2 | 1 | 2 | no match → -1 | 2 | 1 |
+| 3 | 1 | 1 | no match → -1 | 2 | 0 |
+| 4 | 1 | 0 | count=0 → candidate=1, +1 | 1 | 1 |
+| 5 | 2 | 1 | no match → -1 | 1 | 0 |
+| 6 | 2 | 0 | count=0 → candidate=2, +1 | 2 | 1 |
 
-**Visual Example:**
-```
-Array: [7, 7, 5, 7, 5, 1, 5, 7, 5, 5, 7, 7, 7]
+**Return candidate = 2** ✓ (2 appears 4/7 times > 3.5)
 
-Step-by-step:
-
-num | candidate | count | Explanation
-----|-----------|-------|-------------
-7   | 7         | 1     | count=0, set candidate=7, increment
-7   | 7         | 2     | matches candidate, increment
-5   | 7         | 1     | doesn't match, decrement
-7   | 7         | 2     | matches, increment
-5   | 7         | 1     | doesn't match, decrement
-1   | 7         | 0     | doesn't match, decrement
-5   | 5         | 1     | count=0, set candidate=5, increment
-7   | 5         | 0     | doesn't match, decrement
-5   | 5         | 1     | count=0, set candidate=5, increment
-5   | 5         | 2     | matches, increment
-7   | 5         | 1     | doesn't match, decrement
-7   | 5         | 0     | doesn't match, decrement
-7   | 7         | 1     | count=0, set candidate=7, increment
-
-Final candidate: 7
-
-Count of 7 in array: 7 times out of 13 (7 > 13/2 = 6.5) ✓
-```
-
-### Example Walkthrough
-
-**Input:** nums = [2,2,1,1,1,2,2]
-| Index | num | count before | candidate before | Action | count after | candidate after |
-|-------|-----|--------------|------------------|--------|-------------|-----------------|
-| 0 | 2 | 0 | - | count=0, set candidate=2 | 1 | 2 |
-| 1 | 2 | 1 | 2 | matches, count++ | 2 | 2 |
-| 2 | 1 | 2 | 2 | doesn't match, count-- | 1 | 2 |
-| 3 | 1 | 1 | 2 | doesn't match, count-- | 0 | 2 |
-| 4 | 1 | 0 | 2 | count=0, set candidate=1 | 1 | 1 |
-| 5 | 2 | 1 | 1 | doesn't match, count-- | 0 | 1 |
-| 6 | 2 | 0 | 1 | count=0, set candidate=2 | 1 | 2 |
-**Output:** 2
-**Verification:** 2 appears 4 times out of 7 (4 > 3.5) ✓
-### Complexity Analysis
-- **Time Complexity**: O(n) - single pass through array
-- **Space Complexity**: O(1) - only two variables (candidate, count)
----
-## Why This Strategy?
-### Problem Requirements Analysis
-**For the follow-up (O(n) time, O(1) space):**
-| Approach | Time | Space | Meets Requirements? |
-|----------|------|-------|---------------------|
-| HashMap | O(n) ✓ | O(n) ❌ | NO - extra space |
-| Sorting | O(n log n) ❌ | O(1) ✓ | NO - too slow |
-| **Boyer-Moore** | **O(n)** ✅ | **O(1)** ✅ | **YES** ✅ |
-**Winner**: Boyer-Moore Voting Algorithm - ONLY approach meeting both requirements!
-### Why Boyer-Moore Works
-**Mathematical Proof:**
-- Let M = count of majority element
-- Let O = count of all other elements combined
-- Given: M > n/2
-- Therefore: M > O (because M + O = n and M > n/2 means M > O)
-**In the algorithm:**
-- Each time we pair M with O, we decrement count
-- After all pairings, M still has elements left (because M > O)
-- The surviving candidate is the majority element
----
-## Critical Edge Cases & Gotchas
-
-### 1. **Single Element**
-```java
-Input: nums = [1]
-Output: 1
-Explanation: Only element is the majority
-```
-
-### 2. **All Same Elements**
-```java
-Input: nums = [5,5,5,5,5]
-Output: 5
-Explanation: 100% majority
-```
-
-### 3. **Majority at Start**
-```java
-Input: nums = [1,1,1,2,3]
-Output: 1
-```
-
-### 4. **Majority at End**
-```java
-Input: nums = [1,2,3,3,3]
-Output: 3
-```
-
-### 5. **Alternating with Majority**
-```java
-Input: nums = [1,2,1,2,1]
-Output: 1
-```
-
-### 6. **Exactly n/2 + 1 occurrences**
-```java
-Input: nums = [1,2,1,3,1] // 1 appears 3 times out of 5
-Output: 1
-```
-
----
-
-## Major Areas Where We Might Go Wrong
-
-### ❌ **MISTAKE 1: Not Resetting Candidate When Count = 0**
-```java
-// WRONG - Doesn't update candidate when count reaches 0!
-for (int num : nums) {
-    if (num == candidate) {
-        count++;
-    } else {
-        count--;
-    }
-}
-```
-
-**Why wrong**: When count = 0, we must consider a new candidate.
-
-**Fix**: Check `if (count == 0) candidate = num;` before incrementing/decrementing
-
-### ❌ **MISTAKE 2: Checking count == 0 After Update**
-```java
-// WRONG - Checks count after decrementing!
-for (int num : nums) {
-    if (num == candidate) {
-        count++;
-    } else {
-        count--;
-    }
-    if (count == 0) candidate = num; // Too late!
-}
-```
-
-**Why wrong**: Should check BEFORE updating count, not after.
-
-**Fix**: Check `count == 0` at the beginning of the loop
-
-### ❌ **MISTAKE 3: Returning Without Verification (If Majority Not Guaranteed)**
-```java
-// WRONG - If majority might not exist!
-return candidate; // What if there's no majority?
-```
-
-**Why wrong**: If problem doesn't guarantee majority exists, must verify.
-
-**Fix**: Add verification phase to count candidate occurrences
-
-### ❌ **MISTAKE 4: Wrong Majority Definition**
-```java
-// WRONG - Using >= instead of >
-if (map.get(num) >= n / 2) {
-    return num;
-}
-```
-
-**Why wrong**: Majority means MORE than n/2, not equal to.
-
-**Fix**: Use `> n / 2`
-
-### ❌ **MISTAKE 5: Integer Division Confusion**
-```java
-// WRONG - Might miss the point
-int threshold = n / 2; // This is floor division
-// For n=5: threshold = 2, but we need count > 2.5
-```
-
-**Why wrong**: While `n / 2` gives floor value, using `>` makes it correct.
-
-**Correct understanding:**
-- n=5: n/2 = 2, need count > 2 (i.e., ≥ 3) ✓
-- n=6: n/2 = 3, need count > 3 (i.e., ≥ 4) ✓
-
----
-
-## Complexity Analysis
-
-### Time Complexity: **O(n)**
-
-| Approach | Time | Explanation |
-|----------|------|-------------|
-| HashMap | O(n) | Single pass, O(1) operations per element |
-| Sorting | O(n log n) | Sorting dominates |
-| Boyer-Moore | O(n) | Single pass, O(1) operations per element |
-
-**Boyer-Moore detailed:**
-- Phase 1: O(n) - one pass through array
-- Phase 2 (if needed): O(n) - one pass to verify
-- Total: O(2n) = O(n)
-
-### Space Complexity
-
-| Approach | Space | Explanation |
-|----------|-------|-------------|
-| HashMap | O(n) | Stores up to n different elements |
-| Sorting | O(1) or O(n) | Depends on sort algorithm |
-| Boyer-Moore | O(1) | Only 2 variables |
-
----
-
-## Visualization
-
-### Boyer-Moore Pairing Concept
-```
-Array: [A, A, B, A, C, A, A]
-       M  M  O  M  O  M  M
-
-Pairing (canceling M with O):
-Round 1: A vs B → cancel → [A, _, _, A, C, A, A]
-Round 2: A vs C → cancel → [A, _, _, _, _, A, A]
-Remaining: [A, A, A]
-
-Result: A is the majority!
-```
-
-### Step-by-Step Trace
-```
-Input: [2,2,1,1,1,2,2]
-
-Initial: candidate = ?, count = 0
-
-i=0, num=2: count=0 → candidate=2, count=1
-            candidate: 2, count: 1
-
-i=1, num=2: num==candidate → count++
-            candidate: 2, count: 2
-
-i=2, num=1: num!=candidate → count--
-            candidate: 2, count: 1
-
-i=3, num=1: num!=candidate → count--
-            candidate: 2, count: 0
-
-i=4, num=1: count=0 → candidate=1, count=1
-            candidate: 1, count: 1
-
-i=5, num=2: num!=candidate → count--
-            candidate: 1, count: 0
-
-i=6, num=2: count=0 → candidate=2, count=1
-            candidate: 2, count: 1
-
-Final: candidate = 2
-```
+**Complexity Analysis**
+- **Time Complexity**: O(n) — single pass
+- **Space Complexity**: O(1) — only two variables
 
 ---
 
 ## Comparison of Approaches
 
-| Approach | Time | Space | Pros | Cons |
-|----------|------|-------|------|------|
-| HashMap | O(n) | O(n) | Easy to understand | Extra space |
-| Sorting | O(n log n) | O(1) | Very simple | Slower than optimal |
-| **Boyer-Moore** | **O(n)** | **O(1)** | **Optimal for follow-up** ✅ | **Requires understanding** |
-| Randomization | O(n) expected | O(1) | Interesting | Not deterministic |
+| Aspect | HashMap | Sorting | Boyer-Moore |
+|--------|---------|---------|-------------|
+| **Time Complexity** | O(n) | O(n log n) | ✅ O(n) |
+| **Space Complexity** | O(n) | O(1) | ✅ O(1) |
+| **Meets Follow-up?** | ❌ extra space | ❌ too slow | ✅ Yes |
+| **Code Simplicity** | Simple | ✅ Trivial | Simple |
+| **Preferred?** | Brute force | Brute force | ✅ Always |
 
-**Best Choice**: Boyer-Moore for optimal solution ✓
+**Recommendation**: Use **Boyer-Moore** — the only approach satisfying both O(n) time and O(1) space. State HashMap first in interviews, then optimize.
 
 ---
 
 ## Key Takeaways
 
-1. **Pattern Recognition**: "Majority element" + "appears > n/2 times" → Boyer-Moore Voting
-2. **Core Insight**: Majority element survives when paired with all others
-3. **Candidate Switching**: When count = 0, switch to new candidate
-4. **Guaranteed Majority**: If guaranteed, no verification needed
-5. **Follow-up Mastery**: O(n) time + O(1) space = Boyer-Moore
-6. **Interview Critical**: Must explain WHY algorithm works, not just HOW
+1. **Majority > All Others Combined**
+   - Since majority appears > n/2 times: `M > n - M` → `M > O`
+   - This is the mathematical foundation that makes Boyer-Moore correct
+
+2. **Check count == 0 BEFORE Updating**
+   - Switch candidate when count reaches 0, then update count
+   - Order matters: check → assign → update
+
+3. **No Verification Needed When Majority is Guaranteed**
+   - Problem says majority always exists → return candidate directly
+   - Only add a second verification pass if majority is NOT guaranteed
+
+4. **count is Not the Final Frequency**
+   - `count` at the end is NOT how many times majority appears
+   - It only tracks the current candidate's lead over opponents
+
+5. **Sorting Trick as a Quick Alternative**
+   - `nums[n/2]` after sorting always gives the majority element
+   - Simple O(n log n) fallback when Boyer-Moore is too complex to explain
 
 ---
 
-## Interview Tips
+## Common Pitfalls
 
-**What to say in an interview:**
+❌ **Mistake 1**: Checking count == 0 AFTER updating (wrong order)
+```java
+// WRONG: count is updated first — candidate switches one step too late
+for (int num : nums) {
+    count += (num == candidate) ? 1 : -1;
+    if (count == 0) candidate = num;  // ← must be at the TOP
+}
+```
+✅ **Correct**: Check count BEFORE the update
+```java
+if (count == 0) candidate = num;
+count += (num == candidate) ? 1 : -1;
+```
 
-> "For the optimal solution with O(n) time and O(1) space, I'll use the Boyer-Moore Voting Algorithm. The key insight is that the majority element appears more than all other elements combined. I maintain a candidate and count - when count reaches zero, I switch candidates. Since the majority element appears more than n/2 times, it will survive all the cancellations and be the final candidate."
+❌ **Mistake 2**: Never switching the candidate
+```java
+// WRONG: candidate is fixed to first element — never changes
+int candidate = nums[0];
+for (int num : nums) {
+    if (num == candidate) count++;
+    else count--;
+}
+```
+✅ **Correct**: Switch candidate whenever count drops to 0
+```java
+if (count == 0) candidate = num;
+```
 
-**Key points to mention:**
-1. **Pattern**: Boyer-Moore Voting Algorithm
-2. **Why it works**: Majority > all others combined
-3. **Candidate switching**: When count = 0, consider new candidate
-4. **Complexity**: O(n) time, O(1) space
-5. **Alternative**: HashMap (O(n) space) or Sorting (O(n log n) time)
+❌ **Mistake 3**: Using `>= n/2` instead of `> n/2` in HashMap check
+```java
+// WRONG: majority means STRICTLY more than half, not equal to
+if (map.get(num) >= n / 2) return num;
+```
+✅ **Correct**: Strict greater-than
+```java
+if (map.get(num) > n / 2) return num;
+```
 
-**If asked "Why does Boyer-Moore work?"**
-> "The majority element appears more than n/2 times, which means it appears more than all other elements combined. When we pair each majority element with any other element and cancel them out (decrement count), the majority will still have occurrences remaining. The algorithm simulates this pairing process by switching candidates when count reaches zero."
-
-**If asked about verification:**
-> "If the problem guarantees a majority element exists, we don't need verification. If not, we should add a second pass to count the candidate's occurrences and verify it exceeds n/2."
+❌ **Mistake 4**: Adding unnecessary verification when majority is guaranteed
+```java
+// UNNECESSARY: wastes an extra O(n) pass
+int verify = 0;
+for (int n : nums) if (n == candidate) verify++;
+if (verify > nums.length / 2) return candidate;
+return -1;
+```
+✅ **Correct**: Simply return when majority is guaranteed
+```java
+return candidate;
+```
 
 ---
 
 ## Related Problems
 
-| Problem | Difficulty | Pattern | Key Difference |
-|---------|-----------|---------|----------------|
-| **Majority Element** | Easy | **Boyer-Moore Voting** | **Find element > n/2** ← This problem |
-| Majority Element II | Medium | Modified Boyer-Moore | Find all elements > n/3 |
-| Single Number | Easy | XOR | Element appearing once |
-| Find Peak Element | Medium | Binary Search | Local maximum |
-| Kth Largest Element | Medium | QuickSelect | Not about majority |
-
-**Pattern Family**: Boyer-Moore Voting / Frequency Counting
+1. **Majority Element II** (Medium) — Find all elements appearing > n/3 times; 2-candidate Boyer-Moore
+2. **Single Number** (Easy) — XOR cancellation; same pairing/cancellation intuition
+3. **Find the Duplicate Number** (Medium) — In-place array index manipulation
+4. **Top K Frequent Elements** (Medium) — Frequency counting with HashMap + Bucket Sort
+5. **Contains Duplicate** (Easy) — Existence-based HashSet pattern
 
 ---
 
-## Final Pattern Label
+## Edge Cases to Consider
 
-✅ **Boyer-Moore Voting Algorithm – Optimal Majority Finding**
+1. **Single Element**
+   ```
+   nums = [1]
+   count=0 → candidate=1, count=1 → return 1 ✓
+   ```
 
-**Remember:** When you see "majority element" + "appears > n/2 times" + "O(1) space" → think Boyer-Moore Voting! The key is candidate switching when count = 0.
+2. **All Same Elements**
+   ```
+   nums = [5,5,5,5,5]
+   count never drops to 0 → candidate stays 5 → return 5 ✓
+   ```
+
+3. **Majority at Start**
+   ```
+   nums = [1,1,1,2,3]
+   1 appears 3/5 times → candidate=1 survives → return 1 ✓
+   ```
+
+4. **Majority at End**
+   ```
+   nums = [1,2,3,3,3]
+   candidate switches until 3 dominates at the end → return 3 ✓
+   ```
+
+5. **Exactly ⌊n/2⌋ + 1 Occurrences (Minimum Majority)**
+   ```
+   nums = [1,2,1,3,1]  (1 appears 3/5 times)
+   1 still survives all cancellations → return 1 ✓
+   ```
+
+6. **Negative Numbers**
+   ```
+   nums = [-1,-1,2,-1]
+   -1 appears 3/4 times → return -1 ✓
+   HashMap and Boyer-Moore both handle negatives naturally
+   ```
+
+---
+
+## Summary
+
+**Problem**: Find the element appearing more than ⌊n/2⌋ times in an array (guaranteed to exist).
+
+**Solution**:
+- Use **Boyer-Moore Voting Algorithm**: maintain `candidate` and `count`
+- When `count == 0` → switch `candidate` to current element
+- Increment count on match, decrement on mismatch
+- Return `candidate` at the end
+
+**Time**: O(n) | **Space**: O(1)
+
+**Pattern**: Boyer-Moore Voting. The majority element always survives all cancellations because it appears more times than all other elements combined. This is the only approach satisfying both O(n) time and O(1) space.
