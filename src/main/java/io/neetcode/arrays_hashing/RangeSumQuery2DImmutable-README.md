@@ -1,140 +1,164 @@
-Great question. This problem is a classic pattern-identification test. Let’s go slow, structured, and visual, because this one unlocks MANY future problems.
+# Range Sum Query 2D - Immutable
 
-🔷 Problem Pattern Identification
-Keywords you should immediately notice:
+## Problem Description
 
-2D matrix
+**Difficulty**: Medium
 
-Multiple queries
+You are given a 2D matrix `matrix`. Handle multiple queries of the following type:
 
-Rectangle sum
+Calculate the **sum of elements** inside the rectangle defined by its upper left corner `(row1, col1)` and lower right corner `(row2, col2)`.
 
-sumRegion must be O(1)
+Implement the `NumMatrix` class:
+- `NumMatrix(int[][] matrix)` — Initializes the object with the integer matrix.
+- `int sumRegion(int row1, int col1, int row2, int col2)` — Returns the sum of elements inside the given rectangle.
 
-👉 This SCREAMS one pattern:
+`sumRegion` must work in **O(1) time**.
 
-✅ 2D Prefix Sum (a.k.a. 2D Cumulative Sum)
+## Examples
 
-If you ever see:
+### Example 1:
+```
+Input:
+matrix =
+  3  0  1  4  2
+  5  6  3  2  1
+  1  2  0  1  5
+  4  1  0  1  7
+  1  0  3  0  5
 
-“sum of submatrix”
+sumRegion(2, 1, 4, 3) → 8   (red rectangle)
+sumRegion(1, 1, 2, 2) → 11  (green rectangle)
+sumRegion(1, 2, 2, 4) → 12  (blue rectangle)
+```
 
-“many queries”
+## Constraints
+- m == matrix.length
+- n == matrix[i].length
+- 1 <= m, n <= 200
+- -10,000 <= matrix[i][j] <= 10,000
+- 0 <= row1 <= row2 < m
+- 0 <= col1 <= col2 < n
+- At most 10,000 calls to sumRegion
 
-“immutable matrix”
+---
 
-➡ Prefix Sum is the ONLY correct approach
+## Pattern Recognition
 
-🔷 Why brute force fails
+**Primary Pattern**: **2D Prefix Sum (Cumulative Area Sum)**
 
-For each query, if you loop rows and columns:
+**Why This Pattern?**
+- Matrix is immutable — precomputation at construction time is safe
+- Multiple queries are made — O(m×n) per query would be 10,000 × 40,000 = too slow
+- We need O(1) per query → precompute all rectangle sums from `(0,0)`
+- Any rectangle sum can then be derived using inclusion-exclusion in O(1)
 
-O(m × n) per query
-10,000 queries → TOO SLOW
+**Key Insight**: Build a `prefix` array where `prefix[r][c]` = sum of all elements from `(0,0)` to `(r-1, c-1)` inclusive. Then any rectangle query is just 4 array lookups and arithmetic.
 
+**Related Patterns**:
+1. **1D Prefix Sum** — Simpler version: `prefix[i]` = sum from index 0 to i-1
+2. **Subarray Sum = K** — Uses prefix sum with HashMap
+3. **Range Sum Query Mutable** — Same idea but with Fenwick Tree for updates
+4. **Maximum Subarray** — Kadane extends prefix sum thinking
 
-We need:
+---
 
-Preprocessing: O(m × n)
-Query: O(1)
+## Algorithm & Approach
 
-🔷 Core Idea (Very Important)
+### Core Insight
 
-We build a prefixSum matrix where:
+**Why Brute Force Fails:**
 
-prefix[r][c] = sum of all elements
-from (0,0) to (r,c)
+```
+Brute force: for each query, loop over all cells in the rectangle
+  → O(m × n) per query
+  → 10,000 queries × 40,000 cells = 400,000,000 operations ❌
 
+Prefix Sum: precompute once O(m × n), then each query is O(1) ✓
+```
 
-So later, any rectangle sum can be computed in O(1).
+**The Big Idea — Think in Areas:**
 
-🔷 Step 1: Build Prefix Sum Matrix
+```
+prefix[r][c] = total sum of rectangle from (0,0) to (r-1, c-1)
 
-Given matrix:
+Visually:
+  (0,0)─────────(0,c-1)
+    |                |
+    |  prefix[r][c]  |
+    |                |
+  (r-1,0)──────(r-1,c-1)
+```
 
-3  0  1  4  2
-5  6  3  2  1
-1  2  0  1  5
-4  1  0  1  7
-1  0  3  0  5
+### Visual Understanding
+```
+Building prefix[r][c] at each cell:
 
++─────────+─────+
+│    A    │  B  │
++─────────+─────+
+│    C    │  X  │
++─────────+─────+
 
-We build prefix of size (m+1) x (n+1)
-(extra row & column = boundary safety)
+prefix[r][c] = X + A + B + C
+             = current cell + top area + left area - top-left (counted twice)
+             = matrix[r-1][c-1] + prefix[r-1][c] + prefix[r][c-1] - prefix[r-1][c-1]
+```
 
-Prefix Formula
-prefix[r][c] =
-matrix[r-1][c-1]
-+ prefix[r-1][c]
-+ prefix[r][c-1]
-- prefix[r-1][c-1]
+**Why subtract `prefix[r-1][c-1]`?**
+Area `A` is included in both `prefix[r-1][c]` (top) and `prefix[r][c-1]` (left), so it gets counted twice. We subtract it once to fix that.
 
+**For sumRegion(row1, col1, row2, col2):**
+```
++──────────+──────────+
+│  REMOVE  │  REMOVE  │
+│   top    │  top-mid │
++──────────+──────────+
+│  REMOVE  │   WANT   │
+│   left   │          │
++──────────+──────────+
 
-Why subtract?
-➡ Because top-left area is counted twice.
+sum = Big − Top − Left + TopLeft
+    = prefix[row2+1][col2+1]
+    - prefix[row1][col2+1]
+    - prefix[row2+1][col1]
+    + prefix[row1][col1]
+```
 
-Final Prefix Matrix (visual)
-prefix =
-0   0   0   0   0   0
-0   3   3   4   8  10
-0   8  14  18  24  27
-0   9  17  21  28  36
-0  13  22  26  34  49
-0  14  23  30  38  58
+**Why add `prefix[row1][col1]` back?** The top-left corner was removed twice (once in "top", once in "left"), so we add it back once.
 
-🔷 Step 2: Query Formula (MOST IMPORTANT)
+### Step-by-Step Algorithm
 
-To find sum of rectangle:
+---
 
-(row1, col1) → (row2, col2)
+#### **Approach 1: (m+1)×(n+1) Prefix Matrix — OPTIMAL & RECOMMENDED**
 
-Formula:
-sum =
-prefix[row2+1][col2+1]
-- prefix[row1][col2+1]
-- prefix[row2+1][col1]
-+ prefix[row1][col1]
+**Core Idea**:
+- Create a `prefix` array of size `(m+1) × (n+1)` — the extra row/column acts as a zero-padding border, eliminating all boundary checks
+- Fill prefix using: `prefix[r][c] = matrix[r-1][c-1] + prefix[r-1][c] + prefix[r][c-1] - prefix[r-1][c-1]`
+- Answer each query using: `prefix[row2+1][col2+1] - prefix[row1][col2+1] - prefix[row2+1][col1] + prefix[row1][col1]`
 
+**Memory Trick**:
+```
+Building:  Current + Top + Left − Diagonal
+Query:     Big     − Top − Left + TopLeft
+```
 
-📌 This is Inclusion–Exclusion Principle
-
-🔷 DRY RUN (Example 1)
-Query:
-sumRegion(2, 1, 4, 3)
-
-
-Matrix region:
-
-2 0 1
-1 0 1
-0 3 0
-
-Plug into formula:
-prefix[5][4] = 38
-prefix[2][4] = 24
-prefix[5][1] = 14
-prefix[2][1] = 3
-
-Calculation:
-38 - 24 - 14 + 3 = 8 ✅
-
-🔷 Java Code (Best Solution)
+**Code Implementation**
+```java
 class NumMatrix {
-private int[][] prefix;
+    private int[][] prefix;
 
     public NumMatrix(int[][] matrix) {
         int m = matrix.length;
         int n = matrix[0].length;
-
         prefix = new int[m + 1][n + 1];
 
         for (int r = 1; r <= m; r++) {
             for (int c = 1; c <= n; c++) {
-                prefix[r][c] =
-                    matrix[r - 1][c - 1]
-                    + prefix[r - 1][c]
-                    + prefix[r][c - 1]
-                    - prefix[r - 1][c - 1];
+                prefix[r][c] = matrix[r - 1][c - 1]
+                              + prefix[r - 1][c]
+                              + prefix[r][c - 1]
+                              - prefix[r - 1][c - 1];
             }
         }
     }
@@ -146,637 +170,334 @@ private int[][] prefix;
              + prefix[row1][col1];
     }
 }
-
-🔷 Time & Space Complexity
-Part	Complexity
-Preprocessing	O(m × n)
-Each query	O(1)
-Space	O(m × n)
-🔷 How YOU should recognize this pattern next time
-
-Ask yourself:
-
-Is the data immutable?
-
-Are there many range queries?
-
-Is brute force too slow?
-
-If YES → Prefix Sum
-
-🔷 Mental Trigger (Memorize This)
-
-“Repeated range sum → Prefix Sum”
-
-For:
-
-1D → prefix sum
-
-2D → 2D prefix sum
-
-Dynamic updates → Fenwick / Segment Tree
-
-If you want, next I can:
-
-Convert this into 1D thinking
-
-Show how this leads to Range Sum Query Mutable
-
-Give you 5 similar problems to practice pattern recognition
-
-Just tell me 👍
-
-prefix[r][c] =
-matrix[r-1][c-1]
-+ prefix[r-1][c]
-+ prefix[r][c-1]
-- prefix[r-1][c-1]
-  sum =
-  prefix[row2+1][col2+1]
-- prefix[row1][col2+1]
-- prefix[row2+1][col1]
-+ prefix[row1][col1]
-  both these are confusing
-
-Perfect 👍
-This confusion is 100% normal. Almost everyone struggles with these two formulas at first.
-Let me reset your mental model and explain this without formulas first, then bring formulas back naturally.
-
-🔴 ROOT CAUSE OF CONFUSION
-
-You’re trying to memorize formulas without seeing why they exist.
-
-👉 So forget formulas for 2 minutes.
-
-🟢 Step 1: What is prefix[r][c] REALLY?
-
-Think like this:
-
-prefix[r][c] = sum of everything inside this rectangle
-
-(0,0) -------------- (r,c)
-|                    |
-|                    |
-|____________________|
-
-
-It includes:
-
-Top
-
-Left
-
-Everything inside
-
-🟢 Step 2: Build prefix WITHOUT formula
-
-To calculate prefix[r][c], what do we already know?
-
-We already know:
-
-1️⃣ Sum of rectangle above → prefix[r-1][c]
-2️⃣ Sum of rectangle left → prefix[r][c-1]
-
-If we add them:
-
-prefix[r-1][c] + prefix[r][c-1]
-
-
-⚠️ Problem:
-The top-left rectangle is counted twice
-
-[  A  ] | B
---------+---
-C    | D   ← current cell
-
-
-Area A counted twice
-
-🟢 Step 3: Fix double counting
-
-So we subtract once:
-
-- prefix[r-1][c-1]
-
-
-Then add current cell value:
-
-+ matrix[r-1][c-1]
-
-✅ NOW the formula makes sense
-prefix[r][c] =
-matrix[r-1][c-1]     ← current cell
-+ prefix[r-1][c]       ← top area
-+ prefix[r][c-1]       ← left area
-- prefix[r-1][c-1]     ← remove duplicate
-
-
-📌 This is not magic, it’s just accounting
-
-🧠 ONE-LINE MEMORY TRICK
-
-Top + Left − Diagonal + Current
-
-🔵 Now the SECOND formula (query)
-
-This one scares everyone 😄
-Again → no formula first
-
-🟢 What do we want?
-
-We want sum of this rectangle:
-
-(row1,col1) -------- (row1,col2)
-|                  |
-|                  |
-(row2,col1) -------- (row2,col2)
-
-🟢 Big rectangle first
-
-If we take:
-
-prefix[row2+1][col2+1]
-
-
-We get:
-
-EVERYTHING from (0,0) to (row2,col2)
-
-
-🚫 But we want only the inner rectangle, not everything.
-
-🟢 Remove unwanted areas
-Remove top area
-prefix[row1][col2+1]
-
-Remove left area
-prefix[row2+1][col1]
-
-
-⚠️ Now top-left corner got removed twice
-
-🟢 Add back overlap
-
-So we add:
-
-+ prefix[row1][col1]
-
-✅ Final Query Formula (now logical)
-sum =
-prefix[row2+1][col2+1]   // big rectangle
-- prefix[row1][col2+1]   // remove top
-- prefix[row2+1][col1]   // remove left
-+ prefix[row1][col1]     // add overlap back
-
-🧠 ONE-LINE MEMORY TRICK
-
-Big − Top − Left + TopLeft
-
-🔥 Ultra Simple Visualization
-+--------+---------+
-| REMOVE | REMOVE  |
-+--------+---------+
-| REMOVE |  WANT   |
-+--------+---------+
-
-🟡 Dry Run in ONE LINE
-
-For:
-
-sumRegion(2,1,4,3)
-
-sum = P(5,4) - P(2,4) - P(5,1) + P(2,1)
-
-🧩 Why +1 indexing helps
-
-By using (m+1) x (n+1) matrix:
-
-No boundary checks
-
-Formula stays clean
-
-row1=0 works naturally
-
-🧠 How to NEVER forget this again
-
-Think areas, not indices.
-
-Every prefix sum problem follows:
-
-ADD big area
-REMOVE extra areas
-FIX double removal
-
-still it is confusing
-
-Got it 👍
-Let’s slow this down to the absolute basics.
-No formulas first. No abstraction. Only numbers and boxes.
-
-If this still feels confusing, that’s OK — we’ll fix it visually + step-by-step.
-
-STEP 0: VERY SMALL MATRIX (no pressure)
-
-Take this 2×3 matrix:
-
-matrix =
-[ 1  2  3
-4  5  6 ]
-
-
-Indexes (0-based):
-
-(0,0)=1  (0,1)=2  (0,2)=3
-(1,0)=4  (1,1)=5  (1,2)=6
-
-STEP 1: What is PREFIX SUM really?
-
-👉 prefix[r][c] = sum of everything from (0,0) to (r-1,c-1)
-
-We use extra row & column to avoid edge cases.
-
-Prefix matrix size = (rows+1) × (cols+1)
-
-So prefix will be 3 × 4
-
-Initialize with 0s:
-
-prefix =
-[ 0  0  0  0
-0  0  0  0
-0  0  0  0 ]
-
-STEP 2: Fill prefix ONE CELL AT A TIME
-prefix[1][1]
-
-Covers only matrix[0][0]
-
-prefix[1][1] = 1
-
-[ 0  0  0  0
-0  1  0  0
-0  0  0  0 ]
-
-prefix[1][2]
-
-Covers matrix[0][0] + matrix[0][1]
-
-1 + 2 = 3
-
-[ 0  0  0  0
-0  1  3  0
-0  0  0  0 ]
-
-prefix[1][3]
-
-Covers matrix row 0 fully
-
-1 + 2 + 3 = 6
-
-[ 0  0  0  0
-0  1  3  6
-0  0  0  0 ]
-
-prefix[2][1]
-
-Covers first column:
-
-1 + 4 = 5
-
-[ 0  0  0  0
-0  1  3  6
-0  5  0  0 ]
-
-prefix[2][2]
-
-Covers:
-
-1  2
-4  5
-
-
-Sum = 12
-
-[ 0  0  0  0
-0  1  3  6
-0  5 12  0 ]
-
-prefix[2][3]
-
-Whole matrix:
-
-1+2+3+4+5+6 = 21
-
-[ 0  0  0  0
-0  1  3  6
-0  5 12 21 ]
-
-🧠 STOP HERE — THIS IS THE MOST IMPORTANT PART
-
-prefix[r][c] already stores rectangle sums
-
-So now queries are just addition & subtraction
-
-STEP 3: Simple query (no formula)
-
-👉 Question:
-Sum of rectangle from (0,1) to (1,2)
-
-That means:
-
-2  3
-5  6
-
-
-Expected answer = 16
-
-STEP 4: How do we get this using prefix?
-Step A: Take BIG rectangle
-
-From (0,0) to (1,2):
-
-prefix[2][3] = 21
-
-Step B: Remove LEFT part (column 0)
-prefix[2][1] = 5
-
-
-21 − 5 = 16
-
-🎉 DONE
-(No top removal needed because row1 = 0)
-
-STEP 5: Another query (harder)
-
-Sum from (1,1) to (1,2)
-
-5  6
-
-
-Expected = 11
-
-Step A: Big rectangle
-prefix[2][3] = 21
-
-Step B: Remove top rows
-prefix[1][3] = 6
-
-
-21 − 6 = 15
-
-Step C: Remove left columns
-prefix[2][1] = 5
-
-
-15 − 5 = 10 ❌ (wrong)
-
-Step D: Add back overlap
-prefix[1][1] = 1
-
-
-10 + 1 = 11 ✅
-
-🧠 WHY overlap is added back?
-
-Because we removed this area twice:
-
-(0,0)
-
-NOW the formula is JUST shorthand
-sum =
-big
-- top
-- left
-+ overlap
-
-
-Nothing more.
-
-FINAL MEMORY IMAGE (IMPORTANT)
-+---------+---------+
-| REMOVE  | REMOVE  |
-+---------+---------+
-| REMOVE  |  WANT   |
-+---------+---------+
-
-IF YOU REMEMBER ONLY ONE THING
-
-👉 Prefix sum = precomputed area sums
-👉 Query = include big, exclude extras, fix overlap
-
+```
+
+**Example Walkthrough**
+
+Input matrix:
+```
+3  0  1  4  2
+5  6  3  2  1
+1  2  0  1  5
+4  1  0  1  7
+1  0  3  0  5
+```
+
+Built prefix (size 6×6):
+```
+ 0   0   0   0   0   0
+ 0   3   3   4   8  10
+ 0   8  14  18  24  27
+ 0   9  17  21  28  36
+ 0  13  22  26  34  49
+ 0  14  23  30  38  58
+```
+
+Query: `sumRegion(2, 1, 4, 3)`
+
+| Value | Cell | Meaning |
+|-------|------|---------|
+| prefix[5][4] | 38 | Big rectangle (0,0)→(4,3) |
+| prefix[2][4] | 24 | Top to remove (0,0)→(1,3) |
+| prefix[5][1] | 14 | Left to remove (0,0)→(4,0) |
+| prefix[2][1] | 3  | TopLeft to add back |
+
+`38 - 24 - 14 + 3 = 3` → **8** ✓
+
+**Complexity Analysis**
+- **Time Complexity**: O(m × n) preprocessing, O(1) per query
+- **Space Complexity**: O(m × n) for prefix array
+
+---
+
+#### **Approach 2: Same-size prefix with boundary checks (ALTERNATIVE)**
+
+**Core Idea**: Build prefix of same size as matrix. Use ternary guards for border indices instead of padding.
+
+**Code Implementation**
+```java
 class NumMatrix {
-
     private int[][] prefix;
 
     public NumMatrix(int[][] matrix) {
-        int row = matrix.length;
-        int col = matrix[0].length;
-        prefix = new int[row][col];
-        for(int r = 0; r<row; r++){
-            int preSum = 0;
-            for(int c = 0; c<col;c++){
-                preSum+=matrix[r][c]+prefix[r-1][c]+prefix[r][c-1]-prefix[r-1][c-1];
-                prefix[r][c] = preSum;
-            }
-        }
-    } is this part right?
+        int m = matrix.length;
+        int n = matrix[0].length;
+        prefix = new int[m][n];
 
-You’re very close, but this constructor is not correct.
-Let’s slow it down and fix it step by step, with clear intuition + dry run.
-
-1️⃣ What prefix[r][c] is SUPPOSED to mean
-
-prefix[r][c] = sum of all elements from (0,0) to (r,c)
-
-Visual:
-
-(0,0) -------- (0,c)
-|               |
-|               |
-(r,0) -------- (r,c)
-
-2️⃣ Correct formula (IMPORTANT)
-
-For 0-based indexing:
-
-prefix[r][c] =
-matrix[r][c]
-+ prefix[r-1][c]     (top)
-+ prefix[r][c-1]     (left)
-- prefix[r-1][c-1]   (overlap)
-
-
-But ⚠️ only if r > 0 and c > 0
-Otherwise you must handle borders.
-
-3️⃣ What is WRONG in your code
-❌ Problem 1: Array index out of bounds
-prefix[r-1][c]
-prefix[r][c-1]
-prefix[r-1][c-1]
-
-
-When:
-
-r == 0 → r-1 = -1 ❌
-
-c == 0 → c-1 = -1 ❌
-
-This will crash.
-
-❌ Problem 2: preSum logic is incorrect
-
-You wrote:
-
-preSum += matrix[r][c] + prefix[r-1][c] + prefix[r][c-1] - prefix[r-1][c-1];
-prefix[r][c] = preSum;
-
-
-❌ This double counts values
-Prefix sum is NOT cumulative row sum + prefix formula.
-
-4️⃣ Correct Constructor (SAFE & CLEAN)
-✅ Best and simplest way
-class NumMatrix {
-
-    private int[][] prefix;
-
-    public NumMatrix(int[][] matrix) {
-        int row = matrix.length;
-        int col = matrix[0].length;
-
-        prefix = new int[row][col];
-
-        for (int r = 0; r < row; r++) {
-            for (int c = 0; c < col; c++) {
-                int top = (r > 0) ? prefix[r - 1][c] : 0;
-                int left = (c > 0) ? prefix[r][c - 1] : 0;
+        for (int r = 0; r < m; r++) {
+            for (int c = 0; c < n; c++) {
+                int top     = (r > 0)          ? prefix[r - 1][c]     : 0;
+                int left    = (c > 0)          ? prefix[r][c - 1]     : 0;
                 int topLeft = (r > 0 && c > 0) ? prefix[r - 1][c - 1] : 0;
-
                 prefix[r][c] = matrix[r][c] + top + left - topLeft;
             }
         }
     }
+
+    public int sumRegion(int row1, int col1, int row2, int col2) {
+        int total   =                                prefix[row2][col2];
+        int top     = (row1 > 0)           ?         prefix[row1 - 1][col2]     : 0;
+        int left    = (col1 > 0)           ?         prefix[row2][col1 - 1]     : 0;
+        int topLeft = (row1 > 0 && col1 > 0) ?       prefix[row1 - 1][col1 - 1] : 0;
+        return total - top - left + topLeft;
+    }
 }
+```
 
-5️⃣ FULL DRY RUN (Simple Example)
-Matrix:
-1 2
-3 4
+**Complexity Analysis**
+- **Time Complexity**: O(m × n) preprocessing, O(1) per query
+- **Space Complexity**: O(m × n)
 
-Step-by-step:
-r=0, c=0
-prefix[0][0] = 1 + 0 + 0 - 0 = 1
+---
 
-r=0, c=1
-prefix[0][1] = 2 + 0 + 1 - 0 = 3
+## Why This Strategy?
 
-r=1, c=0
-prefix[1][0] = 3 + 1 + 0 - 0 = 4
+### Problem Requirements Analysis
 
-r=1, c=1
-prefix[1][1] = 4 + 3 + 4 - 1 = 10
+| Requirement | Brute Force | Approach 2 (same-size) | Approach 1 (m+1 x n+1) |
+|-------------|-------------|------------------------|-------------------------|
+| sumRegion time | O(m×n) ❌ | O(1) ✓ | O(1) ✓ |
+| Preprocessing | O(1) | O(m×n) | O(m×n) |
+| Border handling | None needed | Ternary checks | No checks needed ✅ |
+| Code simplicity | ✅ Simple | Medium | ✅ Cleanest |
+| Interview friendly | ❌ (too slow) | ⚠️ | ✅ **Best** |
 
-Final prefix matrix:
-1   3
-4  10
+**Winner**: **(m+1)×(n+1) prefix matrix** — clean formula, no border checks, single return statement in query.
 
-6️⃣ Why sumRegion becomes O(1)
+---
 
-Formula:
+## Critical Edge Cases & Gotchas
 
-sum =
-prefix[row2][col2]
-- prefix[row1-1][col2]
-- prefix[row2][col1-1]
-+ prefix[row1-1][col1-1]
+### 1. **Top-left corner query `(0,0,0,0)`**
+```java
+sumRegion(0, 0, 0, 0)
+// Approach 1: prefix[1][1] - prefix[0][1] - prefix[1][0] + prefix[0][0]
+//           = prefix[1][1] - 0 - 0 + 0 = matrix[0][0] ✓
+```
 
+### 2. **Full matrix query**
+```java
+sumRegion(0, 0, m-1, n-1)
+// Returns prefix[m][n] which is total sum of entire matrix ✓
+```
 
-Only 4 array lookups → O(1) 🔥
+### 3. **Single row query**
+```java
+sumRegion(2, 1, 2, 3)
+// Works correctly — row1 == row2, regular formula applies ✓
+```
 
-7️⃣ Key takeaway (remember this!)
+### 4. **Single column query**
+```java
+sumRegion(1, 2, 3, 2)
+// Works correctly — col1 == col2, regular formula applies ✓
+```
 
-❌ Don’t use preSum for 2D prefix
+### 5. **Single cell query**
+```java
+sumRegion(1, 1, 1, 1)
+// Returns value of exactly matrix[1][1] ✓
+```
 
-✅ Each cell is independent
+---
 
-✅ Always guard r-1 and c-1
+## Major Areas Where We Might Go Wrong
 
-public int sumRegion(int row1, int col1, int row2, int col2) {
-return int sum = prefix[row2][col2]-prefix[row1-1][col2]
--prefix[row1][col1-1]+prefix[row1-1][col1-1];
-}is this part right?
-
-Good question — almost right idea, but this code is NOT correct ❌
-There are 2 clear problems. Let’s fix them calmly.
-
-❌ Problem 1: Java syntax error
-
-You cannot declare a variable inside return.
-
-❌ Your code
-return int sum = ...
-
-✅ Correct syntax
-
-Either:
-
-return expression;
-
-
-or
-
-int sum = expression;
-return sum;
-
-❌ Problem 2: Index out-of-bounds risk
-
-When:
-
-row1 == 0 → row1 - 1 = -1
-
-col1 == 0 → col1 - 1 = -1
-
-That will crash your program.
-
-✅ Correct sumRegion (0-based prefix matrix)
-public int sumRegion(int row1, int col1, int row2, int col2) {
-int total = prefix[row2][col2];
-int top = (row1 > 0) ? prefix[row1 - 1][col2] : 0;
-int left = (col1 > 0) ? prefix[row2][col1 - 1] : 0;
-int topLeft = (row1 > 0 && col1 > 0) ? prefix[row1 - 1][col1 - 1] : 0;
-
-    return total - top - left + topLeft;
+### ❌ **MISTAKE 1: Using preSum variable as running row total**
+```java
+// WRONG — adds row running sum on top of 2D prefix formula
+int preSum = 0;
+for (int c = 0; c < col; c++) {
+    preSum += matrix[r][c] + prefix[r-1][c] + prefix[r][c-1] - prefix[r-1][c-1];
+    prefix[r][c] = preSum;   // ❌ double counting!
 }
+```
+**Why wrong**: `preSum` accumulates the row, but `prefix[r][c-1]` already includes everything to the left. You're adding the left sum twice.
 
-🧠 Why this works (very important intuition)
-total      -> full big rectangle
-top        -> remove extra top area
-left       -> remove extra left area
-topLeft    -> added twice → add back once
+**Fix**: Each cell in prefix is independent — compute it directly, don't use running totals.
+```java
+// CORRECT
+prefix[r][c] = matrix[r-1][c-1]
+             + prefix[r-1][c]
+             + prefix[r][c-1]
+             - prefix[r-1][c-1];
+```
 
+### ❌ **MISTAKE 2: Same-size prefix without boundary guards**
+```java
+// WRONG — crashes when r=0 or c=0
+prefix[r][c] = matrix[r][c] + prefix[r-1][c] + prefix[r][c-1] - prefix[r-1][c-1];
+// r=0: prefix[-1][c] → ArrayIndexOutOfBoundsException ❌
+```
+**Fix**: Either use the (m+1)×(n+1) approach, or add boundary checks:
+```java
+int top = (r > 0) ? prefix[r-1][c] : 0;
+```
 
-This is inclusion–exclusion principle.
+### ❌ **MISTAKE 3: Wrong query formula indices**
+```java
+// WRONG — off by one in query due to 0-based prefix without padding
+return prefix[row2][col2] - prefix[row1-1][col2] - prefix[row2][col1-1] + prefix[row1-1][col1-1];
+// row1=0: prefix[-1][...] → crash ❌
+```
+**Fix**: Use the (m+1)×(n+1) prefix so indices never go negative:
+```java
+// CORRECT
+return prefix[row2+1][col2+1] - prefix[row1][col2+1] - prefix[row2+1][col1] + prefix[row1][col1];
+```
 
-🔍 Quick Dry Run (Simple)
-Prefix matrix:
-1   3
-4  10
+### ❌ **MISTAKE 4: `return int sum = ...` Java syntax**
+```java
+// WRONG — cannot declare variable inside return
+return int sum = prefix[row2][col2] - ...;  // ❌ compile error
+```
+**Fix**:
+```java
+// CORRECT
+return prefix[row2+1][col2+1] - prefix[row1][col2+1] - prefix[row2+1][col1] + prefix[row1][col1];
+```
 
-Query:
-sumRegion(1, 0, 1, 1)  // elements: 3 + 4 = 7
+### ❌ **MISTAKE 5: Forgetting the +TopLeft in query**
+```java
+// WRONG — forgets to add back the doubly removed top-left
+return prefix[row2+1][col2+1] - prefix[row1][col2+1] - prefix[row2+1][col1];
+// Top-left area was subtracted twice → result is too small ❌
+```
+**Fix**: Always include the `+prefix[row1][col1]` to add the top-left back once.
 
+---
 
-Calculation:
+## Complexity Analysis
 
-total    = prefix[1][1] = 10
-top      = prefix[0][1] = 3
-left     = 0
-topLeft  = 0
+### (m+1)×(n+1) Prefix Approach
 
-result = 10 - 3 = 7 ✅
+**Time Complexity**
 
-⭐ Interview Tip
+| Operation | Time | Reason |
+|-----------|------|--------|
+| Constructor — fill prefix | O(m × n) | Visit every cell once |
+| sumRegion query | O(1) | 4 array lookups + arithmetic |
+| k calls to sumRegion | O(k) | Each call is O(1) |
+| **Total** | **O(m × n + k)** | |
 
-If you want cleaner code, use 1-based prefix (no if-conditions).
-I can show that version too — just ask.
+**Space Complexity**
+
+| Component | Space | Reason |
+|-----------|-------|--------|
+| prefix array | O(m × n) | (m+1) × (n+1) array |
+| sumRegion variables | O(1) | Constant extra space |
+| **Total** | **O(m × n)** | |
+
+---
+
+## Visualization
+
+### Complete Build + Query Walk-Through
+
+**Matrix (3×3 example):**
+```
+1  2  3
+4  5  6
+7  8  9
+```
+
+**Build prefix (4×4, 1-indexed):**
+```
+Step-by-step (r from 1→3, c from 1→3):
+
+r=1,c=1: matrix[0][0]=1 + 0 + 0 - 0 = 1
+r=1,c=2: matrix[0][1]=2 + 0 + 1 - 0 = 3
+r=1,c=3: matrix[0][2]=3 + 0 + 3 - 0 = 6
+r=2,c=1: matrix[1][0]=4 + 1 + 0 - 0 = 5
+r=2,c=2: matrix[1][1]=5 + 3 + 5 - 1 = 12
+r=2,c=3: matrix[1][2]=6 + 6 + 12 - 3 = 21
+r=3,c=1: matrix[2][0]=7 + 5 + 0 - 0 = 12
+r=3,c=2: matrix[2][1]=8 + 12 + 12 - 5 = 27
+r=3,c=3: matrix[2][2]=9 + 21 + 27 - 12 = 45
+
+Final prefix:
+   0   0   0   0
+   0   1   3   6
+   0   5  12  21
+   0  12  27  45
+```
+
+**Query: `sumRegion(1, 1, 2, 2)` → expected: 5+6+8+9 = 28**
+```
+prefix[3][3] = 45  (big)
+prefix[1][3] = 6   (top)
+prefix[3][1] = 12  (left)
+prefix[1][1] = 1   (topLeft)
+
+45 - 6 - 12 + 1 = 28 ✓
+```
+
+---
+
+## Comparison of Approaches
+
+| Approach | Build Time | Query Time | Space | Code | When to Use |
+|----------|-----------|-----------|-------|------|-------------|
+| Brute Force | O(1) | O(m×n) ❌ | O(1) | Simple | ❌ Too slow for many queries |
+| **Prefix (m+1)×(n+1)** | **O(m×n)** | **O(1) ✅** | **O(m×n)** | **✅ Cleanest** | **Default choice ✅** |
+| Prefix same-size | O(m×n) | O(1) ✅ | O(m×n) | Verbose | When avoiding extra space |
+
+**Recommendation**: Always use the **(m+1)×(n+1) prefix** approach — no boundary checks, clean indexing, single-line query.
+
+---
+
+## Key Takeaways
+
+1. **"Immutable + multiple range queries" = Prefix Sum** — recognize this pattern instantly
+2. **2D prefix[r][c]** = sum of entire rectangle from `(0,0)` to `(r-1, c-1)`
+3. **Building formula**: `Current + Top + Left − TopLeft` (fix double counting)
+4. **Query formula**: `Big − Top − Left + TopLeft` (inclusion-exclusion)
+5. **(m+1)×(n+1) is cleaner** — zero-padding row/col removes all boundary checks
+6. **Don't use running row sum** for 2D prefix — each cell is computed independently
+7. **O(1) query** is only possible because we precomputed all prefix areas
+
+---
+
+## Interview Tips
+
+**What to say in an interview:**
+
+> "Since the matrix is immutable and we need O(1) range queries, I'll use a 2D prefix sum. I precompute a (m+1)×(n+1) array where prefix[r][c] stores the sum of all elements from (0,0) to (r-1, c-1). Building it takes O(m×n) using the inclusion-exclusion formula: each cell equals current + top + left − topLeft. Then each sumRegion query is just four prefix lookups: big − top − left + topLeft."
+
+**Key points to mention:**
+1. **Why prefix sum** — multiple queries + immutable = precompute
+2. **Why (m+1)×(n+1)** — avoids all boundary index checks
+3. **Build formula** — include-exclude to avoid double counting
+4. **Query formula** — same inclusion-exclusion in reverse
+5. **Complexity** — O(m×n) build, O(1) query, O(m×n) space
+
+**If asked about mutable matrix:**
+> "If the matrix were mutable, we'd use a Binary Indexed Tree (Fenwick Tree) or 2D Segment Tree to handle point updates in O(log m × log n) while keeping range queries efficient."
+
+---
+
+## Related Problems
+
+| Problem | Difficulty | Pattern | Key Difference |
+|---------|-----------|---------|----------------|
+| **Range Sum Query 2D - Immutable** | Medium | **2D Prefix Sum** | **This problem** ← |
+| Range Sum Query - Immutable (1D) | Easy | 1D Prefix Sum | 1D version |
+| Subarray Sum Equals K | Medium | Prefix Sum + HashMap | Count subarrays, not range query |
+| Range Sum Query - Mutable | Medium | Fenwick Tree / BIT | Matrix has updates |
+| Matrix Block Sum | Medium | 2D Prefix Sum | Variant of this problem |
+| Count Vowel Substrings | Medium | Prefix Sum variant | Different domain |
+
+**Pattern Progression**:
+1. **1D Prefix Sum** — simplest form (`prefix[i]` = sum of first i elements)
+2. **Range Sum Query (1D)** — direct application
+3. **2D Prefix Sum** (this problem) — extend to 2D areas
+4. **Mutable Prefix** — Fenwick Tree / Segment Tree for dynamic updates
+
+---
+
+## Final Pattern Label
+
+✅ **2D Prefix Sum — Inclusion-Exclusion**
+
+**Remember:** `"immutable matrix + many rectangle queries"` → **Build (m+1)×(n+1) prefix once, answer every query in O(1) with Big − Top − Left + TopLeft!**
+
