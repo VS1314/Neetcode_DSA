@@ -3,16 +3,44 @@ package io.neetcode.stack;
 import java.util.Stack;
 
 public class ValidParentheses {
+
+    public boolean isValid(String s) {
+        char[] stack = new char[s.length()];
+        int top = 0;
+        for (char c : s.toCharArray()) {
+            if (c == '(' || c == '[' || c == '{')
+                stack[top++] = c;
+            else if (top != 0) {
+                char open = stack[top - 1];
+                if (c == ')' && open == '(') {
+                    top--;
+                } else if (c == ']' && open == '[') {
+                    top--;
+                } else if (c == '}' && open == '{') {
+                    top--;
+                } else
+                    return false;
+            } else
+                return false;
+        }
+        return top == 0;
+    }
+
     public boolean isValid(String s) {
         Stack<Character> st = new Stack<>();
         for (char c : s.toCharArray()) {
-            if (c == '{' || c == '[' || c == '(') st.push(c);
-            else if (st.isEmpty()) return false;
+            if (c == '{' || c == '[' || c == '(')
+                st.push(c);
+            else if (st.isEmpty())
+                return false;
             else {
                 char ch = st.pop();
-                if (c == '}' && ch != '{') return false;
-                if (c == ']' && ch != '[') return false;
-                if (c == ')' && ch != '(') return false;
+                if (c == '}' && ch != '{')
+                    return false;
+                if (c == ']' && ch != '[')
+                    return false;
+                if (c == ')' && ch != '(')
+                    return false;
             }
         }
         return st.isEmpty();
@@ -28,16 +56,22 @@ public class ValidParentheses {
             }
             switch (c) {
                 case ']':
-                    if (!st.isEmpty() && st.peek().equals('[')) st.pop();
-                    else return false;
+                    if (!st.isEmpty() && st.peek().equals('['))
+                        st.pop();
+                    else
+                        return false;
                     break;
                 case '}':
-                    if (!st.isEmpty() && st.peek().equals('{')) st.pop();
-                    else return false;
+                    if (!st.isEmpty() && st.peek().equals('{'))
+                        st.pop();
+                    else
+                        return false;
                     break;
                 case ')':
-                    if (!st.isEmpty() && st.peek().equals('(')) st.pop();
-                    else return false;
+                    if (!st.isEmpty() && st.peek().equals('('))
+                        st.pop();
+                    else
+                        return false;
                     break;
                 default:
                     break;
