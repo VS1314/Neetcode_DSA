@@ -1,6 +1,5 @@
 package io.neetcode.linkedlist;
 
-
 /**
  * Definition for singly-linked list.
  * public class ListNode {
@@ -15,9 +14,9 @@ package io.neetcode.linkedlist;
 public class ReverseLinkedList {
 
     public ListNode reverseList(ListNode head) {
-        ListNode prev = null, current = head;
+        ListNode prev = null, current = head, next;
         while (current != null) {
-            ListNode next = current.next;
+            next = current.next;
             current.next = prev;
             prev = current;
             current = next;
@@ -25,4 +24,3 @@ public class ReverseLinkedList {
         return prev;
     }
 }
-
