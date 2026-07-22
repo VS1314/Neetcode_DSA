@@ -18,6 +18,34 @@ class Node {
 public class CopyLinkedListwithRandomPointer {
 
     public Node copyRandomList(Node head) {
+        Node curr = head;
+        while (curr != null) {
+            Node clone = new Node(curr.val);
+            clone.next = curr.next;
+            curr.next = clone;
+            curr = clone.next;
+        }
+        curr = head;
+        while (curr != null) {
+            if (curr.random != null) {
+                curr.next.random = curr.random.next;
+            }
+            curr = curr.next.next;
+        }
+
+        curr = head;
+        Node dummy = new Node(0);
+        Node live = dummy;
+        while (curr != null) {
+            live.next = curr.next;
+            live = live.next;
+            curr.next = curr.next.next;
+            curr = curr.next;
+        }
+        return dummy.next;
+    }
+
+    public Node copyRandomList(Node head) {
         HashMap<Node, Node> map = new HashMap<>();
         Node current = head;
         while (current != null) {
