@@ -16,15 +16,14 @@ import java.util.ArrayList;
 public class MergeKSortedLinkedLists {
 
     public ListNode mergeKLists(ListNode[] lists) { // Divide & Conquer
-        if (lists == null || lists.length == 0) return null;
-        while (lists.length > 1) {
-            List<ListNode> ll = new ArrayList<>();
-            for (int i = 0; i < lists.length; i += 2) {
-                ListNode l1 = lists[i];
-                ListNode l2 = (i + 1 < lists.length) ? lists[i + 1] : null;
-                ll.add(mergeTwoLists(l1, l2));
+        if (lists == null || lists.length == 0)
+            return null;
+        int interval = 1;
+        while (interval < lists.length) {
+            for (int i = 0; i + interval < lists.length; i += interval * 2) {
+                lists[i] = merge(lists[i], lists[i + interval]);
             }
-            lists = ll.toArray(new ListNode[0]);
+            interval *= 2;
         }
         return lists[0];
     }
@@ -47,7 +46,8 @@ public class MergeKSortedLinkedLists {
     }
 
     public ListNode mergeKLists(ListNode[] lists) { // Min Heap / Priority Queue
-        if (lists == null || lists.length == 0) return null;
+        if (lists == null || lists.length == 0)
+            return null;
         PriorityQueue<ListNode> pq = new PriorityQueue<>((a, b) -> a.val - b.val);
 
         for (ListNode head : lists) {
@@ -61,7 +61,8 @@ public class MergeKSortedLinkedLists {
             ListNode small = pq.poll();
             curr.next = small;
             curr = curr.next;
-            if (small.next != null) pq.offer(small.next);
+            if (small.next != null)
+                pq.offer(small.next);
         }
 
         return dummy.next;

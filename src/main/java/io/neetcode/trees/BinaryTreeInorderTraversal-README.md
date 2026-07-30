@@ -4,219 +4,579 @@
 
 **Difficulty**: Easy
 
-You are given the root of a binary tree, return the **inorder traversal** of its nodes' values.
+You are given the `root` of a binary tree, return the **inorder traversal** of its nodes' values.
 
-**Inorder Traversal**: Left → Root → Right (for each subtree)
+**Inorder Traversal Order**: **Left → Root → Right**
+
+**Key Concepts:**
+- **Inorder Traversal**: Process left subtree, then root, then right subtree
+- **Recursive Solution**: Natural and trivial implementation
+- **Iterative Solution**: Uses explicit stack (follow-up requirement)
+- **Morris Traversal**: O(1) space solution using threading (advanced)
+- **Order Property**: For BST, inorder gives sorted values
+
+**Visual Example:**
+```
+Tree:
+       1
+      / \
+     2   3
+    / \ / \
+   4  5 6  7
+
+Inorder Traversal: Left → Root → Right
+Process order:
+  1. Go left to 2
+  2. Go left to 4
+  3. Visit 4 (leftmost)
+  4. Back to 2, visit 2
+  5. Go right to 5, visit 5
+  6. Back to 1, visit 1
+  7. Go right to 3
+  8. Go left to 6, visit 6
+  9. Back to 3, visit 3
+  10. Go right to 7, visit 7
+
+Result: [4, 2, 5, 1, 6, 3, 7]
+```
+
+**Follow-up**: Recursive solution is trivial, could you do it iteratively?
+
+---
 
 ## Examples
 
-### Example 1:
+### Example 1 (Complete Binary Tree):
 ```
 Input: root = [1,2,3,4,5,6,7]
 
 Tree Structure:
-        1
-       / \
-      2   3
-     / \ / \
-    4  5 6  7
+       1
+      / \
+     2   3
+    / \ / \
+   4  5 6  7
 
 Output: [4,2,5,1,6,3,7]
-Explanation: Inorder traversal visits left subtree, then root, then right subtree.
+
+Explanation:
+Inorder (Left → Root → Right):
+  Visit 4 (left of 2)
+  Visit 2 (root of left subtree)
+  Visit 5 (right of 2)
+  Visit 1 (main root)
+  Visit 6 (left of 3)
+  Visit 3 (root of right subtree)
+  Visit 7 (right of 3)
 ```
 
-### Example 2:
+### Example 2 (Incomplete Tree):
 ```
 Input: root = [1,2,3,null,4,5,null]
 
 Tree Structure:
-        1
-       / \
-      2   3
-       \ /
-       4 5
+       1
+      / \
+     2   3
+      \ /
+      4 5
 
 Output: [2,4,1,5,3]
+
+Explanation:
+Inorder traversal:
+  2 (left child of 1, no left child of its own)
+  4 (right child of 2)
+  1 (root)
+  5 (left child of 3)
+  3 (root of right subtree)
 ```
 
-### Example 3:
+### Example 3 (Empty Tree):
 ```
 Input: root = []
 
 Output: []
-Explanation: Empty tree returns empty list.
+
+Explanation:
+No nodes to traverse
+Return empty list
 ```
 
+### Example 4 (Single Node):
+```
+Input: root = [1]
+
+Tree:
+  1
+
+Output: [1]
+
+Explanation:
+Only root node
+Inorder traversal returns [1]
+```
+
+### Example 5 (Left Skewed Tree):
+```
+Input: root = [1,2,null,3,null,4,null]
+
+Tree:
+    1
+   /
+  2
+ /
+3
+/
+4
+
+Output: [4,3,2,1]
+
+Explanation:
+Only left children
+Traverse to leftmost (4), then back up
+```
+
+### Example 6 (Right Skewed Tree):
+```
+Input: root = [1,null,2,null,3,null,4]
+
+Tree:
+1
+ \
+  2
+   \
+    3
+     \
+      4
+
+Output: [1,2,3,4]
+
+Explanation:
+Only right children
+Visit root first, then traverse right
+```
+
+### Example 7 (Binary Search Tree):
+```
+Input: root = [5,3,7,1,4,6,8]
+
+Tree (BST):
+       5
+      / \
+     3   7
+    / \ / \
+   1  4 6  8
+
+Output: [1,3,4,5,6,7,8]
+
+Explanation:
+Inorder traversal of BST gives sorted values
+```
+
+### Example 8 (Two Nodes - Left Child):
+```
+Input: root = [1,2]
+
+Tree:
+  1
+ /
+2
+
+Output: [2,1]
+
+Explanation:
+Visit left child first, then root
+```
+
+### Example 9 (Two Nodes - Right Child):
+```
+Input: root = [1,null,2]
+
+Tree:
+1
+ \
+  2
+
+Output: [1,2]
+
+Explanation:
+Visit root first, then right child
+```
+
+### Example 10 (Larger Tree):
+```
+Input: root = [1,2,3,4,5,6,7,8,9,10]
+
+Tree:
+           1
+         /   \
+        2     3
+       / \   / \
+      4   5 6   7
+     / \ /
+    8  9 10
+
+Output: [8,4,9,2,10,5,1,6,3,7]
+
+Explanation:
+Inorder traversal processes all nodes
+Left subtree → Root → Right subtree recursively
+```
+
+---
+
 ## Constraints
-- 0 <= number of nodes in the tree <= 100
-- -100 <= Node.val <= 100
+- `0 <= number of nodes in the tree <= 100`
+- `-100 <= Node.val <= 100`
+
+**Recommended Complexity**: 
+- Time: O(n) where n = number of nodes
+- Space: O(h) where h = height (O(n) worst case for skewed tree)
+- Advanced (Morris): O(n) time, O(1) space
 
 ---
 
 ## Pattern Recognition
 
-**Primary Pattern**: **Tree Traversal - Inorder (DFS)**
+**Primary Pattern**: **Tree Traversal - Depth First Search (DFS)**
 
 **Why This Pattern?**
-- Tree traversal is a fundamental operation
-- Inorder follows: **Left → Root → Right**
-- Results in **sorted order** for Binary Search Trees
-- Classic DFS (Depth-First Search) variation
+- **Inorder** is one of three DFS traversals (preorder, inorder, postorder)
+- Processes **left subtree** before **root** before **right subtree**
+- Natural **recursive** structure matches tree structure
+- Can be done **iteratively** with explicit stack
+- **BST property**: Inorder gives sorted values
 
-**Key Insight**: Inorder traversal can be done both recursively (natural) and iteratively (using a stack to simulate recursion).
+**Key Insight**: Three DFS Traversal Orders
+```
+For any node:
+  Preorder:  Root → Left → Right
+  Inorder:   Left → Root → Right  ← This problem
+  Postorder: Left → Right → Root
+
+Tree:
+    1
+   / \
+  2   3
+
+Preorder:  [1, 2, 3]
+Inorder:   [2, 1, 3]
+Postorder: [2, 3, 1]
+
+Different orders serve different purposes!
+```
+
+**Visual: Inorder Traversal Flow**
+```
+Tree:
+       1
+      / \
+     2   3
+    / \
+   4   5
+
+Recursive calls (Inorder: Left → Root → Right):
+
+inorder(1):
+  inorder(2):           // Left
+    inorder(4):         // Left
+      inorder(null)     // Left of 4
+      add 4 ✓           // Root (4)
+      inorder(null)     // Right of 4
+    add 2 ✓             // Root (2)
+    inorder(5):         // Right
+      inorder(null)     // Left of 5
+      add 5 ✓           // Root (5)
+      inorder(null)     // Right of 5
+  add 1 ✓               // Root (1)
+  inorder(3):           // Right
+    inorder(null)       // Left of 3
+    add 3 ✓             // Root (3)
+    inorder(null)       // Right of 3
+
+Result: [4, 2, 5, 1, 3]
+```
+
+**Why Recursive is Natural**:
+```
+Tree is recursive structure:
+  - Node has left child (subtree)
+  - Node has right child (subtree)
+  - Each subtree is also a tree
+
+Recursive traversal mirrors structure:
+  traverse(left)   // Process left subtree
+  visit(root)      // Process current node
+  traverse(right)  // Process right subtree
+
+Natural fit! ✓
+```
+
+**Why Iterative Needs Stack**:
+```
+Recursive uses implicit call stack
+
+To convert to iterative:
+  Need explicit stack to track nodes
+  Simulate recursive call behavior
+  
+Stack-based iterative traversal! ✓
+```
+
+**Iterative Algorithm Strategy**:
+```
+1. Start with root
+2. Go left as far as possible, pushing nodes to stack
+3. When can't go left, pop from stack:
+   - Process node
+   - Go to right child
+4. Repeat until stack empty and no more nodes
+
+Simulates recursive traversal! ✓
+```
+
+**Visual: Iterative with Stack**
+```
+Tree:
+    1
+   / \
+  2   3
+
+Step-by-step:
+
+Initial: current = 1, stack = [], result = []
+
+1. Go left: push 1, current = 2
+   stack = [1], current = 2
+
+2. Go left: push 2, current = null
+   stack = [1, 2], current = null
+
+3. Can't go left, pop 2
+   result = [2], current = 2.right = null
+   stack = [1]
+
+4. Can't go left, pop 1
+   result = [2, 1], current = 1.right = 3
+   stack = []
+
+5. Go left: push 3, current = null
+   stack = [3], current = null
+
+6. Can't go left, pop 3
+   result = [2, 1, 3], current = 3.right = null
+   stack = []
+
+7. Stack empty and current null, done!
+
+Result: [2, 1, 3] ✓
+```
+
+**Morris Traversal (Advanced - O(1) Space)**:
+```
+Idea: Use tree structure itself instead of stack
+
+Technique: Threading
+  - Create temporary links (threads)
+  - Use right pointers of predecessors
+  - No extra space needed!
+
+Complex but achieves O(1) space ✓
+```
+
+**Core Operations**:
+
+**Recursive Approach**:
+```java
+List<Integer> result = new ArrayList<>();
+
+inorder(TreeNode root):
+    if root == null:
+        return
+    
+    inorder(root.left)      // Left
+    result.add(root.val)    // Root
+    inorder(root.right)     // Right
+```
+
+**Iterative Approach**:
+```java
+List<Integer> result = new ArrayList<>();
+Stack<TreeNode> stack = new Stack<>();
+TreeNode current = root;
+
+while current != null or !stack.isEmpty():
+    // Go left as far as possible
+    while current != null:
+        stack.push(current)
+        current = current.left
+    
+    // Process node
+    current = stack.pop()
+    result.add(current.val)
+    
+    // Go right
+    current = current.right
+```
 
 **Related Patterns**:
-1. **Preorder Traversal** - Root → Left → Right
-2. **Postorder Traversal** - Left → Right → Root
-3. **Level Order Traversal** - BFS (uses queue instead)
-4. **Morris Traversal** - O(1) space traversal
+1. **Preorder Traversal** — Root → Left → Right
+2. **Inorder Traversal** — This problem (Left → Root → Right)
+3. **Postorder Traversal** — Left → Right → Root
+4. **Level Order Traversal** — BFS, level by level
 
 ---
 
 ## Algorithm & Approach
 
 ### Core Insight
-Inorder traversal visits nodes in this order:
-1. Visit all nodes in the **left subtree**
-2. Visit the **current node**
-3. Visit all nodes in the **right subtree**
 
-For a BST, this produces values in **sorted ascending order**.
-
-### Visual Understanding
+**Why Inorder Traversal Works:**
 ```
-Tree:       1
-           / \
-          2   3
-         / \
-        4   5
+Key observations:
+  1. Tree is recursive: each node has left/right subtrees
+  2. Inorder: process left, then root, then right
+  3. Recursive solution mirrors tree structure
+  4. Iterative solution uses stack to simulate recursion
+  5. Visit each node exactly once: O(n)
+```
 
-Execution Flow:
-1. Start at 1
-2. Go left to 2
-3. Go left to 4
-4. 4 has no left → Visit 4 → Add 4 to result
-5. 4 has no right → Back to 2
-6. Visit 2 → Add 2 to result
-7. Go right to 5
-8. 5 has no left → Visit 5 → Add 5 to result
-9. Back to 1
-10. Visit 1 → Add 1 to result
-11. Go right to 3
-12. 3 has no left → Visit 3 → Add 3 to result
+**The Optimal Strategy**:
+```
+Recursive (Simple):
+  - Base case: null node returns
+  - Recursive case: left → visit → right
+  - Natural and clean
+  - O(h) space for call stack
 
-Result: [4, 2, 5, 1, 3]
+Iterative (Follow-up):
+  - Explicit stack instead of call stack
+  - Go left, push nodes
+  - Pop, process, go right
+  - Same O(h) space for stack
+
+Morris (Advanced):
+  - Threading technique
+  - Use tree structure itself
+  - O(1) space!
+  - More complex
 ```
 
 ### Step-by-Step Algorithm
 
-#### **Approach 1: Recursive (MOST NATURAL)**
+---
 
-**Core Idea**: Recursion naturally mimics the tree structure.
+#### **Approach 1: Recursive - SIMPLEST**
+
+**Core Idea**:
+- Recursively traverse left subtree
+- Visit current node
+- Recursively traverse right subtree
+- Natural and clean implementation
 
 **Algorithm**
-```
-inorder(node):
-    if node is null:
+```java
+inorderTraversal(TreeNode root):
+    result = new ArrayList<>()
+    inorderHelper(root, result)
+    return result
+
+inorderHelper(TreeNode node, List<Integer> result):
+    if node == null:
         return
     
-    inorder(node.left)      // Process left subtree
-    result.add(node.val)     // Visit current node
-    inorder(node.right)      // Process right subtree
+    inorderHelper(node.left, result)   // Left
+    result.add(node.val)               // Root
+    inorderHelper(node.right, result)  // Right
 ```
 
-**Code Implementation**
+**Complete Code Implementation (Recursive)**
 ```java
 class Solution {
     public List<Integer> inorderTraversal(TreeNode root) {
         List<Integer> result = new ArrayList<>();
-        inorder(root, result);
+        inorderHelper(root, result);
         return result;
     }
     
-    private void inorder(TreeNode node, List<Integer> result) {
+    private void inorderHelper(TreeNode node, List<Integer> result) {
         if (node == null) {
             return;
         }
         
-        inorder(node.left, result);    // Left
-        result.add(node.val);           // Root
-        inorder(node.right, result);    // Right
+        // Left
+        inorderHelper(node.left, result);
+        
+        // Root
+        result.add(node.val);
+        
+        // Right
+        inorderHelper(node.right, result);
     }
 }
 ```
 
-**Example Walkthrough**
+**Example Walkthrough (Recursive)**
 
-Input: root = [1,2,3,4,5,6,7]
-
+Input: root = [1,2,3]
 ```
 Tree:
-        1
-       / \
-      2   3
-     / \ / \
-    4  5 6  7
-
-Call Stack Visualization:
-
-inorder(1)
-├─ inorder(2)
-│  ├─ inorder(4)
-│  │  ├─ inorder(null)      → return
-│  │  ├─ add 4              → result = [4]
-│  │  └─ inorder(null)      → return
-│  ├─ add 2                 → result = [4,2]
-│  └─ inorder(5)
-│     ├─ inorder(null)      → return
-│     ├─ add 5              → result = [4,2,5]
-│     └─ inorder(null)      → return
-├─ add 1                    → result = [4,2,5,1]
-└─ inorder(3)
-   ├─ inorder(6)
-   │  ├─ inorder(null)      → return
-   │  ├─ add 6              → result = [4,2,5,1,6]
-   │  └─ inorder(null)      → return
-   ├─ add 3                 → result = [4,2,5,1,6,3]
-   └─ inorder(7)
-      ├─ inorder(null)      → return
-      ├─ add 7              → result = [4,2,5,1,6,3,7]
-      └─ inorder(null)      → return
-
-Final Result: [4,2,5,1,6,3,7]
+    1
+   / \
+  2   3
 ```
 
-**Complexity Analysis**
-- **Time Complexity**: O(n) - Visit each node exactly once
-- **Space Complexity**: O(h) - Recursion stack depth (h = height of tree)
-  - Best case (balanced tree): O(log n)
-  - Worst case (skewed tree): O(n)
+**Recursive Calls:**
+```
+inorder(1):
+  inorder(2):           // Left of 1
+    inorder(null)       // Left of 2
+    add 2               // Root (2)
+    inorder(null)       // Right of 2
+  add 1                 // Root (1)
+  inorder(3):           // Right of 1
+    inorder(null)       // Left of 3
+    add 3               // Root (3)
+    inorder(null)       // Right of 3
+
+Result: [2, 1, 3] ✓
+```
 
 ---
 
-#### **Approach 2: Iterative Using Stack (OPTIMAL SPACE CONTROL)**
+#### **Approach 2: Iterative with Stack - FOLLOW-UP**
 
-**Core Idea**: Use an explicit stack to simulate the recursive call stack.
-
-**Why Iterative?**
-- Avoids recursion overhead
-- More control over stack usage
-- Better for very deep trees (prevents stack overflow)
-- Follow-up challenge in the problem
+**Core Idea**:
+- Use explicit stack to simulate recursion
+- Go left as far as possible, pushing nodes
+- Pop, process, then go right
+- Same traversal order as recursive
 
 **Algorithm**
-```
-1. Initialize empty stack and result list
-2. Start with current = root
-3. While current is not null OR stack is not empty:
-   a. Push all left nodes onto stack
-   b. Pop from stack (this is the node to visit)
-   c. Add popped node's value to result
-   d. Move to right child
-4. Return result
+```java
+inorderTraversal(TreeNode root):
+    result = new ArrayList<>()
+    stack = new Stack<>()
+    current = root
+    
+    while current != null or !stack.isEmpty():
+        // Go left as far as possible
+        while current != null:
+            stack.push(current)
+            current = current.left
+        
+        // Process node
+        current = stack.pop()
+        result.add(current.val)
+        
+        // Go right
+        current = current.right
+    
+    return result
 ```
 
-**Code Implementation**
+**Complete Code Implementation (Iterative)**
 ```java
 class Solution {
     public List<Integer> inorderTraversal(TreeNode root) {
@@ -225,17 +585,17 @@ class Solution {
         TreeNode current = root;
         
         while (current != null || !stack.isEmpty()) {
-            // Go to the leftmost node
+            // Go left as far as possible, pushing nodes
             while (current != null) {
                 stack.push(current);
                 current = current.left;
             }
             
-            // Current is null, so pop from stack
+            // Process node
             current = stack.pop();
-            result.add(current.val);  // Visit node
+            result.add(current.val);
             
-            // Move to right subtree
+            // Go right
             current = current.right;
         }
         
@@ -244,80 +604,100 @@ class Solution {
 }
 ```
 
-**Step-by-Step Dry Run**
+**Example Walkthrough (Iterative)**
 
-Input: root = [1,2,3,4,5]
-
+Input: root = [1,2,3]
+```
 Tree:
-```
-        1
-       / \
-      2   3
-     / \
-    4   5
+    1
+   / \
+  2   3
 ```
 
-Execution Steps:
+**Step-by-Step:**
+```
+Initial:
+  current = 1, stack = [], result = []
 
-| Step | current | stack | Action | result |
-|------|---------|-------|--------|--------|
-| 1 | 1 | [] | Start | [] |
-| 2 | 2 | [1] | Push 1, go left | [] |
-| 3 | 4 | [1,2] | Push 2, go left | [] |
-| 4 | null | [1,2,4] | Push 4, go left | [] |
-| 5 | 4 | [1,2] | Pop 4 | [4] |
-| 6 | null | [1,2] | 4 has no right | [4] |
-| 7 | 2 | [1] | Pop 2 | [4,2] |
-| 8 | 5 | [1] | 2.right = 5 | [4,2] |
-| 9 | null | [1,5] | Push 5, go left | [4,2] |
-| 10 | 5 | [1] | Pop 5 | [4,2,5] |
-| 11 | null | [1] | 5 has no right | [4,2,5] |
-| 12 | 1 | [] | Pop 1 | [4,2,5,1] |
-| 13 | 3 | [] | 1.right = 3 | [4,2,5,1] |
-| 14 | null | [3] | Push 3, go left | [4,2,5,1] |
-| 15 | 3 | [] | Pop 3 | [4,2,5,1,3] |
-| 16 | null | [] | 3 has no right | [4,2,5,1,3] |
-| 17 | - | [] | Stack empty, done | [4,2,5,1,3] |
+Step 1: Go left, push 1
+  stack.push(1)
+  current = 2
+  stack = [1], current = 2
 
-Output: [4,2,5,1,3]
+Step 2: Go left, push 2
+  stack.push(2)
+  current = null
+  stack = [1, 2], current = null
 
-**Complexity Analysis**
-- **Time Complexity**: O(n) - Visit each node exactly once
-- **Space Complexity**: O(h) - Stack size
-  - Best case (balanced tree): O(log n)
-  - Worst case (skewed tree): O(n)
+Step 3: Can't go left (current = null)
+  current = stack.pop() = 2
+  result.add(2)
+  current = 2.right = null
+  stack = [1], result = [2]
+
+Step 4: Can't go left (current = null)
+  current = stack.pop() = 1
+  result.add(1)
+  current = 1.right = 3
+  stack = [], result = [2, 1]
+
+Step 5: Go left, push 3
+  stack.push(3)
+  current = null
+  stack = [3], current = null
+
+Step 6: Can't go left
+  current = stack.pop() = 3
+  result.add(3)
+  current = 3.right = null
+  stack = [], result = [2, 1, 3]
+
+Step 7: current = null, stack empty → done
+
+Result: [2, 1, 3] ✓
+```
 
 ---
 
-#### **Approach 3: Morris Traversal (SPACE OPTIMAL)**
+#### **Approach 3: Morris Traversal - O(1) SPACE (ADVANCED)**
 
-**Core Idea**: Use **threaded binary tree** concept - temporarily modify the tree to create links back to parent, avoiding both recursion and stack.
-
-**Why Morris?**
-- **O(1) space complexity** (excluding output)
-- No recursion, no stack
-- Advanced technique, rarely needed in interviews
+**Core Idea**:
+- Use threading to avoid stack
+- Create temporary links using right pointers
+- No extra space needed
+- More complex but optimal space
 
 **Algorithm**
-```
-1. current = root
-2. While current is not null:
-   a. If current has no left child:
-      - Visit current
-      - Move to right child
-   b. If current has left child:
-      - Find rightmost node in left subtree (predecessor)
-      - If predecessor.right is null:
-          * Create thread: predecessor.right = current
-          * Move to left child
-      - If predecessor.right == current:
-          * Remove thread: predecessor.right = null
-          * Visit current
-          * Move to right child
-3. Return result
+```java
+inorderTraversal(TreeNode root):
+    result = new ArrayList<>()
+    current = root
+    
+    while current != null:
+        if current.left == null:
+            // No left child, visit current
+            result.add(current.val)
+            current = current.right
+        else:
+            // Find predecessor (rightmost node in left subtree)
+            predecessor = current.left
+            while predecessor.right != null and predecessor.right != current:
+                predecessor = predecessor.right
+            
+            if predecessor.right == null:
+                // Create thread
+                predecessor.right = current
+                current = current.left
+            else:
+                // Thread already exists, remove it
+                predecessor.right = null
+                result.add(current.val)
+                current = current.right
+    
+    return result
 ```
 
-**Code Implementation**
+**Complete Code Implementation (Morris)**
 ```java
 class Solution {
     public List<Integer> inorderTraversal(TreeNode root) {
@@ -326,11 +706,11 @@ class Solution {
         
         while (current != null) {
             if (current.left == null) {
-                // No left child, visit current and go right
+                // No left child, visit current node
                 result.add(current.val);
                 current = current.right;
             } else {
-                // Find predecessor (rightmost node in left subtree)
+                // Find inorder predecessor
                 TreeNode predecessor = current.left;
                 while (predecessor.right != null && predecessor.right != current) {
                     predecessor = predecessor.right;
@@ -341,7 +721,7 @@ class Solution {
                     predecessor.right = current;
                     current = current.left;
                 } else {
-                    // Remove thread and visit
+                    // Thread exists, remove it and visit
                     predecessor.right = null;
                     result.add(current.val);
                     current = current.right;
@@ -355,8 +735,9 @@ class Solution {
 ```
 
 **Complexity Analysis**
-- **Time Complexity**: O(n) - Each node visited at most 3 times
-- **Space Complexity**: O(1) - No stack or recursion (excluding output)
+- **Recursive**: O(n) time, O(h) space (call stack)
+- **Iterative**: O(n) time, O(h) space (explicit stack)
+- **Morris**: O(n) time, O(1) space (threading)
 
 ---
 
@@ -364,32 +745,94 @@ class Solution {
 
 ### Problem Requirements Analysis
 
-| Requirement | Recursive | Iterative | Morris |
-|-------------|-----------|-----------|--------|
-| Correctness | ✓ | ✓ | ✓ |
-| Time complexity | O(n) ✓ | O(n) ✓ | O(n) ✓ |
-| Space complexity | O(h) | O(h) | O(1) ✅ **Best** |
-| Code simplicity | ✅ **Simplest** | Medium | ❌ Complex |
-| Interview friendly | ✅ **Yes** | ✅ Yes | ⚠️ Only if asked |
-| Easy to debug | ✅ | Medium | ❌ |
+| Approach | Time | Space | Difficulty | Recommended |
+|----------|------|-------|------------|-------------|
+| **Recursive** | **O(n)** | **O(h)** | **Easy** | **Yes (simple)** |
+| **Iterative** | **O(n)** | **O(h)** | **Medium** | **Yes (follow-up)** |
+| Morris | O(n) | O(1) | Hard | Advanced |
 
-**Winner for Interviews**: **Recursive** ✓ (Start here, then show iterative if asked)
+**Winner**: **Recursive** for simplicity, **Iterative** for follow-up, **Morris** for space optimization
 
-### Why Recursive is Preferred?
-1. **Natural fit** - Trees are recursive structures
-2. **Clean code** - 3 lines in the helper function
-3. **Easy to understand** - Mirrors the definition
-4. **Less error-prone** - Fewer edge cases to handle
+### Why Recursive is Natural
 
-### When to Use Iterative?
-1. **Follow-up question** asks for it
-2. **Very deep trees** - Risk of stack overflow with recursion
-3. **Performance critical** - Slight overhead reduction
+```
+Tree is recursive structure:
+  Node {
+    left: subtree
+    right: subtree
+  }
 
-### When to Use Morris?
-1. **Explicitly asked** for O(1) space
-2. **Embedded systems** - Limited memory
-3. **To impress** - Shows advanced knowledge
+Recursive traversal mirrors structure:
+  process(left subtree)
+  process(node)
+  process(right subtree)
+
+Perfect match! ✓
+Natural and clean code ✓
+```
+
+### Why Iterative Needs Stack
+
+```
+Recursive uses implicit call stack
+
+To make iterative:
+  Need to track "where we are"
+  Need to remember nodes to process
+  Stack stores pending nodes
+  
+Explicit stack replaces call stack ✓
+```
+
+### Why Morris Achieves O(1) Space
+
+```
+Key insight: Use tree structure itself
+
+Threading:
+  - Temporarily modify tree
+  - Create links using right pointers
+  - Use links to navigate
+  - Restore tree structure
+  
+No extra data structure needed! ✓
+```
+
+### Why Inorder Matters for BST
+
+```
+Binary Search Tree property:
+  left < root < right
+
+Inorder traversal of BST:
+  Visit nodes in ascending order
+  [left values] → root → [right values]
+  
+Result: Sorted array! ✓
+
+Use case: Validate BST, find kth smallest, etc.
+```
+
+### Why This is Optimal
+
+```
+Time complexity:
+  Must visit all n nodes: Ω(n)
+  Each node visited once: O(n)
+  Optimal! ✓
+
+Space complexity:
+  Recursive/Iterative: O(h) for stack
+    Balanced tree: h = log n
+    Skewed tree: h = n
+    Acceptable for most cases ✓
+  
+  Morris: O(1) no extra space
+    Optimal space! ✓
+    But more complex
+
+Choose based on requirements!
+```
 
 ---
 
@@ -397,306 +840,579 @@ class Solution {
 
 ### 1. **Empty Tree**
 ```java
-Input: root = null
-Output: []
-Explanation: No nodes to traverse.
+root = null
+// Should return empty list []
 ```
 
 ### 2. **Single Node**
 ```java
-Input: root = [1]
-Output: [1]
-Explanation: Just the root.
+root = [1]
+// Return [1]
 ```
 
-### 3. **Only Left Skewed Tree**
+### 3. **Left Skewed Tree**
 ```java
-Input: root = [3,2,null,1]
+    1
+   /
+  2
+ /
+3
 
-Tree:    3
-        /
-       2
-      /
-     1
-
-Output: [1,2,3]
-Space: O(n) - Stack grows to tree height
+// Result: [3, 2, 1]
+// Stack depth = height = n (worst case)
 ```
 
-### 4. **Only Right Skewed Tree**
+### 4. **Right Skewed Tree**
 ```java
-Input: root = [1,null,2,null,3]
+1
+ \
+  2
+   \
+    3
 
-Tree:  1
-        \
-         2
-          \
-           3
-
-Output: [1,2,3]
-Space: O(n) - Worst case for stack
+// Result: [1, 2, 3]
+// Looks like preorder for right-skewed
 ```
 
-### 5. **Balanced Tree**
+### 5. **Complete Binary Tree**
 ```java
-Input: root = [4,2,6,1,3,5,7]
+       1
+      / \
+     2   3
+    / \ / \
+   4  5 6  7
 
-Tree:       4
-          /   \
-         2     6
-        / \   / \
-       1   3 5   7
-
-Output: [1,2,3,4,5,6,7]
-Note: BST gives sorted output!
+// Result: [4, 2, 5, 1, 6, 3, 7]
+// Balanced, stack depth = log n
 ```
 
-### 6. **Tree with Negative Values**
+### 6. **Binary Search Tree**
 ```java
-Input: root = [0,-1,1]
+     4
+    / \
+   2   6
+  / \ / \
+ 1  3 5  7
 
-Tree:     0
-         / \
-       -1   1
+// Result: [1, 2, 3, 4, 5, 6, 7] (sorted!)
+// Inorder of BST gives ascending order
+```
 
-Output: [-1,0,1]
-Explanation: Values can be negative per constraints.
+### 7. **Tree with Null Children**
+```java
+    1
+   /
+  2
+   \
+    3
+
+// Result: [2, 3, 1]
+// Handle null pointers correctly
+```
+
+### 8. **Two Nodes**
+```java
+  1
+ /
+2
+
+// Result: [2, 1]
+
+1
+ \
+  2
+
+// Result: [1, 2]
+```
+
+### 9. **Negative Values**
+```java
+     0
+    / \
+  -5   5
+
+// Result: [-5, 0, 5]
+// Values can be negative
+```
+
+### 10. **All Same Values**
+```java
+    1
+   / \
+  1   1
+
+// Result: [1, 1, 1]
+// Duplicate values allowed
 ```
 
 ---
 
 ## Major Areas Where We Might Go Wrong
 
-### ❌ **MISTAKE 1: Wrong Order of Operations**
+### ❌ **MISTAKE 1: Wrong Traversal Order**
 ```java
-// WRONG - This is PREORDER, not INORDER!
-private void inorder(TreeNode node, List<Integer> result) {
+// WRONG - this is PREORDER, not inorder
+private void inorderHelper(TreeNode node, List<Integer> result) {
     if (node == null) return;
     
-    result.add(node.val);        // ❌ Adding root FIRST
-    inorder(node.left, result);
-    inorder(node.right, result);
+    result.add(node.val);          // ❌ Root first (preorder)
+    inorderHelper(node.left, result);
+    inorderHelper(node.right, result);
 }
 ```
 
-**Why wrong**: This is **Preorder** (Root → Left → Right), not **Inorder** (Left → Root → Right).
+**Why wrong**: Processes root before left subtree!
 
-**Fix**: Visit left first, then root, then right
+**Issue:**
+```
+Preorder: Root → Left → Right
+Inorder:  Left → Root → Right
+
+Wrong order! ❌
+```
+
+**Fix**: Left → Root → Right
 ```java
-// CORRECT - INORDER
-private void inorder(TreeNode node, List<Integer> result) {
+private void inorderHelper(TreeNode node, List<Integer> result) {
     if (node == null) return;
     
-    inorder(node.left, result);   // Left first
-    result.add(node.val);          // Then root
-    inorder(node.right, result);   // Then right
+    inorderHelper(node.left, result);   // Left ✓
+    result.add(node.val);               // Root ✓
+    inorderHelper(node.right, result);  // Right ✓
 }
 ```
 
-### ❌ **MISTAKE 2: Forgetting Base Case in Recursion**
+### ❌ **MISTAKE 2: Iterative - Not Going Left First**
 ```java
-// WRONG - No base case!
-private void inorder(TreeNode node, List<Integer> result) {
-    inorder(node.left, result);   // NullPointerException!
-    result.add(node.val);
-    inorder(node.right, result);
-}
-```
-
-**Why wrong**: When node is null, calling node.left causes NullPointerException.
-
-**Fix**: Always check for null first
-```java
-// CORRECT
-private void inorder(TreeNode node, List<Integer> result) {
-    if (node == null) return;  // ✓ Base case
-    
-    inorder(node.left, result);
-    result.add(node.val);
-    inorder(node.right, result);
-}
-```
-
-### ❌ **MISTAKE 3: Iterative - Wrong Loop Condition**
-```java
-// WRONG
-while (!stack.isEmpty()) {  // ❌ Misses initial nodes!
+// WRONG - not pushing left nodes first
+while (!stack.isEmpty()) {
     TreeNode node = stack.pop();
-    result.add(node.val);
-    // ...
-}
-```
-
-**Why wrong**: If you start with current = root, and only check stack, you'll never push the first nodes!
-
-**Fix**: Check both current AND stack
-```java
-// CORRECT
-while (current != null || !stack.isEmpty()) {
-    // ...
-}
-```
-
-### ❌ **MISTAKE 4: Iterative - Not Going All the Way Left**
-```java
-// WRONG
-while (current != null || !stack.isEmpty()) {
-    if (current != null) {  // ❌ Only pushes one left node
-        stack.push(current);
-        current = current.left;
-    }
-    current = stack.pop();
-    result.add(current.val);
-    current = current.right;
-}
-```
-
-**Why wrong**: The if statement prevents going all the way to the leftmost node.
-
-**Fix**: Use nested while loop
-```java
-// CORRECT
-while (current != null || !stack.isEmpty()) {
-    while (current != null) {  // ✓ Goes ALL the way left
-        stack.push(current);
-        current = current.left;
-    }
-    current = stack.pop();
-    result.add(current.val);
-    current = current.right;
-}
-```
-
-### ❌ **MISTAKE 5: Creating New List Inside Recursive Function**
-```java
-// WRONG - Creates multiple lists!
-private List<Integer> inorder(TreeNode node) {
-    List<Integer> result = new ArrayList<>();  // ❌ New list each call!
-    if (node == null) return result;
+    result.add(node.val);  // ❌ Wrong order
     
-    result.addAll(inorder(node.left));
-    result.add(node.val);
-    result.addAll(inorder(node.right));
+    if (node.right != null) stack.push(node.right);
+    if (node.left != null) stack.push(node.left);
+}
+```
+
+**Why wrong**: This is preorder, not inorder!
+
+**Issue:**
+```
+Need to go left completely first
+Then process, then go right
+
+This processes immediately ❌
+```
+
+**Fix**: Go left, then pop and process
+```java
+TreeNode current = root;
+while (current != null || !stack.isEmpty()) {
+    while (current != null) {
+        stack.push(current);
+        current = current.left;  // Go left ✓
+    }
+    
+    current = stack.pop();
+    result.add(current.val);  // Process ✓
+    current = current.right;  // Go right ✓
+}
+```
+
+### ❌ **MISTAKE 3: Not Handling Null Root**
+```java
+// WRONG - NullPointerException if root is null
+public List<Integer> inorderTraversal(TreeNode root) {
+    List<Integer> result = new ArrayList<>();
+    Stack<TreeNode> stack = new Stack<>();
+    stack.push(root);  // ❌ What if root is null?
+    // ...
+}
+```
+
+**Why wrong**: Null root causes issues!
+
+**Fix**: Check null or handle properly
+```java
+// Iterative handles null automatically:
+TreeNode current = root;  // Can be null ✓
+while (current != null || !stack.isEmpty()) {
+    // Works even if root is null
+}
+
+// Recursive handles with base case:
+if (node == null) return;  ✓
+```
+
+### ❌ **MISTAKE 4: Forgetting to Return Result**
+```java
+// WRONG - void return type
+public void inorderTraversal(TreeNode root) {  // ❌
+    List<Integer> result = new ArrayList<>();
+    // ... traversal ...
+    // Missing return!
+}
+```
+
+**Why wrong**: Need to return the result list!
+
+**Fix**: Return List<Integer>
+```java
+public List<Integer> inorderTraversal(TreeNode root) {  ✓
+    List<Integer> result = new ArrayList<>();
+    // ... traversal ...
+    return result;  ✓
+}
+```
+
+### ❌ **MISTAKE 5: Iterative - Wrong Loop Condition**
+```java
+// WRONG - only checks stack, misses current
+while (!stack.isEmpty()) {  // ❌
+    // What if current != null but stack empty?
+}
+```
+
+**Why wrong**: Misses nodes when stack empty!
+
+**Dry run failure:**
+```
+Initial: current = 1, stack = []
+
+Loop condition: !stack.isEmpty() → false ❌
+Loop exits immediately!
+
+Never processes any nodes!
+```
+
+**Fix**: Check both current and stack
+```java
+while (current != null || !stack.isEmpty()) {  ✓
+    // Process when either has nodes
+}
+```
+
+### ❌ **MISTAKE 6: Modifying Tree Structure (Unintentionally)**
+```java
+// WRONG - modifying tree in Morris without restoring
+predecessor.right = current;  // Create thread
+// ... but never restore predecessor.right = null ❌
+```
+
+**Why wrong**: Tree structure permanently changed!
+
+**Issue:**
+```
+Morris traversal creates temporary links
+Must remove them after use
+Otherwise tree is corrupted ❌
+```
+
+**Fix**: Restore tree structure
+```java
+if (predecessor.right == null) {
+    predecessor.right = current;  // Create thread
+    current = current.left;
+} else {
+    predecessor.right = null;  // Restore ✓
+    result.add(current.val);
+    current = current.right;
+}
+```
+
+### ❌ **MISTAKE 7: Iterative - Not Updating Current After Pop**
+```java
+// WRONG - not moving to right child
+while (current != null || !stack.isEmpty()) {
+    while (current != null) {
+        stack.push(current);
+        current = current.left;
+    }
+    
+    current = stack.pop();
+    result.add(current.val);
+    // Missing: current = current.right; ❌
+}
+```
+
+**Why wrong**: Infinite loop or wrong traversal!
+
+**Dry run failure:**
+```
+After processing node:
+  current still points to processed node
+  Inner while loop pushes it again ❌
+  Infinite loop or duplicate processing!
+```
+
+**Fix**: Move to right child
+```java
+current = stack.pop();
+result.add(current.val);
+current = current.right;  ✓
+```
+
+### ❌ **MISTAKE 8: Using BFS (Level Order) Instead of DFS**
+```java
+// WRONG - this is level order, not inorder
+Queue<TreeNode> queue = new LinkedList<>();
+queue.offer(root);
+
+while (!queue.isEmpty()) {
+    TreeNode node = queue.poll();
+    result.add(node.val);  // ❌ Level order
+    
+    if (node.left != null) queue.offer(node.left);
+    if (node.right != null) queue.offer(node.right);
+}
+```
+
+**Why wrong**: Different traversal type!
+
+**Issue:**
+```
+BFS (Level Order): Process by levels
+  Result: [1, 2, 3, 4, 5, 6, 7]
+
+DFS Inorder: Left → Root → Right
+  Result: [4, 2, 5, 1, 6, 3, 7]
+
+Completely different! ❌
+```
+
+**Fix**: Use DFS with stack or recursion
+```java
+// Stack for DFS ✓
+Stack<TreeNode> stack = new Stack<>();
+```
+
+### ❌ **MISTAKE 9: Not Creating New ArrayList for Result**
+```java
+// WRONG - result not initialized
+private List<Integer> result;  // ❌ null
+
+public List<Integer> inorderTraversal(TreeNode root) {
+    inorderHelper(root, result);  // NullPointerException!
     return result;
 }
 ```
 
-**Why wrong**: 
-- Creates n lists (one per node)
-- Uses O(n²) space due to copying
-- Inefficient
+**Why wrong**: Result list is null!
 
-**Fix**: Pass the same list through all calls
+**Fix**: Initialize result list
 ```java
-// CORRECT
-private void inorder(TreeNode node, List<Integer> result) {
-    if (node == null) return;
-    
-    inorder(node.left, result);   // ✓ Same list
-    result.add(node.val);
-    inorder(node.right, result);
+public List<Integer> inorderTraversal(TreeNode root) {
+    List<Integer> result = new ArrayList<>();  ✓
+    inorderHelper(root, result);
+    return result;
 }
 ```
 
-### ❌ **MISTAKE 6: Confusing Inorder with Other Traversals**
+### ❌ **MISTAKE 10: Morris - Infinite Loop (Wrong Predecessor Check)**
+```java
+// WRONG - doesn't check predecessor.right != current
+TreeNode predecessor = current.left;
+while (predecessor.right != null) {  // ❌
+    predecessor = predecessor.right;
+}
+```
 
-| Traversal | Order | Use Case |
-|-----------|-------|----------|
-| **Inorder** | **Left → Root → Right** | **BST: Get sorted values** ← This problem |
-| Preorder | Root → Left → Right | Copy tree structure |
-| Postorder | Left → Right → Root | Delete tree, evaluate expression |
-| Level-order | Level by level | BFS, shortest path |
+**Why wrong**: Infinite loop with thread!
 
-**Remember**: 
-- **IN**order = **IN** sorted order (for BST)
-- **PRE**order = Root comes **PRE**viously (before children)
-- **POST**order = Root comes **POST**erior (after children)
+**Issue:**
+```
+After creating thread:
+  predecessor.right = current (not null)
+
+Loop condition: predecessor.right != null
+  Always true! ❌
+  Infinite loop!
+```
+
+**Fix**: Check for thread
+```java
+while (predecessor.right != null && predecessor.right != current) {  ✓
+    predecessor = predecessor.right;
+}
+```
 
 ---
 
 ## Complexity Analysis
 
-### Recursive Approach
+### Time Complexity: **O(n)**
 
-**Time Complexity: O(n)**
+```
+Where n = number of nodes
 
-| Operation | Time | Reason |
-|-----------|------|--------|
-| Visit each node | O(n) | Each node visited exactly once |
-| Add to list | O(1) | ArrayList add is amortized O(1) |
-| Total | O(n) | Linear in number of nodes |
+All approaches:
+  - Visit each node exactly once
+  - Process each node in constant time
+  - Total: O(n)
 
-**Space Complexity: O(h)**
+Recursive:
+  T(n) = T(left) + T(right) + O(1)
+       = O(n)
 
-| Component | Space | Reason |
-|-----------|-------|--------|
-| Recursion stack | O(h) | Maximum depth of call stack |
-| Result list | O(n) | Stores all node values |
-| Total | O(n) | Dominated by result list |
+Iterative:
+  Each node pushed and popped once: O(n)
 
-Where h = height of tree:
-- Balanced tree: h = O(log n)
-- Skewed tree: h = O(n)
+Morris:
+  Each node visited at most 3 times: O(3n) = O(n)
+```
 
-### Iterative Approach
+**Detailed Analysis**:
+```
+For each node:
+  Recursive: visit once (left, process, right)
+  Iterative: push once, pop once
+  Morris: visit at most 3 times (find predecessor, thread, process)
 
-**Time Complexity: O(n)**
-- Same as recursive - each node visited once
+All O(n) ✓
+```
 
-**Space Complexity: O(h)**
-- Stack size instead of recursion stack
-- Same space usage as recursive
+### Space Complexity
 
-### Morris Traversal
+**Recursive: O(h)** where h = height
+```
+Space for call stack:
+  - Best case (balanced): h = log n → O(log n)
+  - Worst case (skewed): h = n → O(n)
+  - Average: O(log n)
 
-**Time Complexity: O(n)**
-- Each node visited at most 3 times
-- Still linear overall
+Call stack depth = height of tree
+```
 
-**Space Complexity: O(1)**
-- No stack, no recursion
-- Only constant extra variables
-- **Best space complexity** ✅
+**Iterative: O(h)** where h = height
+```
+Space for explicit stack:
+  - Same as recursive call stack
+  - Stores nodes along path from root to current
+  - Maximum size = height
+  
+  Best: O(log n)
+  Worst: O(n)
+```
+
+**Morris: O(1)**
+```
+No extra data structure:
+  - Only constant pointers
+  - Uses tree structure itself
+  
+True O(1) space! ✓
+```
+
+### Optimal Complexity
+
+```
+Time: O(n)
+  - Must visit all nodes: Ω(n)
+  - All approaches: O(n)
+  - Optimal! ✓
+
+Space:
+  - Recursive/Iterative: O(h)
+    Reasonable for most trees
+  
+  - Morris: O(1)
+    Optimal space! ✓
+    But more complex
+
+Choose based on needs!
+```
 
 ---
 
 ## Visualization
 
-### Complete Example Walkthrough
+### Complete Example Walkthrough (Recursive)
 
-**Input:** root = [1,2,3,4,5,6,7]
+**Input:** `root = [1,2,3,4,5]`
 
 ```
-Tree Structure:
-        1
-       / \
-      2   3
-     / \ / \
-    4  5 6  7
-
-Inorder Traversal Order (with levels):
-
-Level 3: Visit 4 (leftmost)
-  ↓
-Level 2: Visit 2 (parent)
-  ↓
-Level 3: Visit 5 (right child of 2)
-  ↓
-Level 1: Visit 1 (root)
-  ↓
-Level 3: Visit 6 (leftmost in right subtree)
-  ↓
-Level 2: Visit 3 (parent)
-  ↓
-Level 3: Visit 7 (rightmost)
-
-Path Visualization:
-4 → 2 → 5 → 1 → 6 → 3 → 7
-
-Result: [4, 2, 5, 1, 6, 3, 7]
+Tree:
+       1
+      / \
+     2   3
+    / \
+   4   5
 ```
 
-### Comparison of Traversals
+**Recursive Call Stack:**
+
+```
+Call inorder(1):
+  Call inorder(2):         // Left of 1
+    Call inorder(4):       // Left of 2
+      Call inorder(null)   // Left of 4 → return
+      Add 4 to result      // Root of 4
+      Call inorder(null)   // Right of 4 → return
+    Add 2 to result        // Root of 2
+    Call inorder(5):       // Right of 2
+      Call inorder(null)   // Left of 5 → return
+      Add 5 to result      // Root of 5
+      Call inorder(null)   // Right of 5 → return
+  Add 1 to result          // Root of 1
+  Call inorder(3):         // Right of 1
+    Call inorder(null)     // Left of 3 → return
+    Add 3 to result        // Root of 3
+    Call inorder(null)     // Right of 3 → return
+
+Result: [4, 2, 5, 1, 3] ✓
+```
+
+---
+
+### Complete Example Walkthrough (Iterative)
+
+**Input:** `root = [1,2,3,4,5]`
+
+**Step-by-Step:**
+
+```
+Initial:
+  current = 1, stack = [], result = []
+
+Iteration 1: Go left
+  Push 1: stack = [1], current = 2
+  Push 2: stack = [1, 2], current = 4
+  Push 4: stack = [1, 2, 4], current = null
+
+Iteration 2: Process 4
+  Pop 4: result = [4], current = null
+  stack = [1, 2]
+
+Iteration 3: Process 2
+  Pop 2: result = [4, 2], current = 5
+  stack = [1]
+
+Iteration 4: Go left from 5
+  Push 5: stack = [1, 5], current = null
+
+Iteration 5: Process 5
+  Pop 5: result = [4, 2, 5], current = null
+  stack = [1]
+
+Iteration 6: Process 1
+  Pop 1: result = [4, 2, 5, 1], current = 3
+  stack = []
+
+Iteration 7: Go left from 3
+  Push 3: stack = [3], current = null
+
+Iteration 8: Process 3
+  Pop 3: result = [4, 2, 5, 1, 3], current = null
+  stack = []
+
+Done: current = null, stack empty
+
+Result: [4, 2, 5, 1, 3] ✓
+```
+
+---
+
+### Visual: Stack State at Each Step
 
 ```
 Tree:       1
@@ -705,39 +1421,65 @@ Tree:       1
          / \
         4   5
 
-Inorder:    [4, 2, 5, 1, 3]  ← Left, Root, Right
-Preorder:   [1, 2, 4, 5, 3]  ← Root, Left, Right
-Postorder:  [4, 5, 2, 3, 1]  ← Left, Right, Root
-Level-order:[1, 2, 3, 4, 5]  ← Level by level
+Stack visualization:
+
+Step 1: Go left to 4
+  [1]
+  [2]
+  [4] ← top
+
+Step 2: Process 4
+  [1]
+  [2] ← top
+  Result: [4]
+
+Step 3: Process 2, go to 5
+  [1]
+  [5] ← top
+  Result: [4, 2]
+
+Step 4: Process 5
+  [1] ← top
+  Result: [4, 2, 5]
+
+Step 5: Process 1, go to 3
+  [3] ← top
+  Result: [4, 2, 5, 1]
+
+Step 6: Process 3
+  [] (empty)
+  Result: [4, 2, 5, 1, 3] ✓
 ```
 
 ---
 
 ## Comparison of Approaches
 
-| Approach | Time | Space | Code Complexity | When to Use |
-|----------|------|-------|-----------------|-------------|
-| **Recursive** | O(n) | O(h) | ✅ **Very Simple** | **Default choice** ✅ |
-| **Iterative** | O(n) | O(h) | Medium | Follow-up or deep trees |
-| **Morris** | O(n) | O(1) ✅ | ❌ Complex | O(1) space required |
+| Approach | Time | Space | Difficulty | Clean Code | Recommended |
+|----------|------|-------|------------|------------|-------------|
+| **Recursive** | **O(n)** | **O(h)** | **Easy** | **Yes** | **Yes (default)** |
+| **Iterative** | **O(n)** | **O(h)** | **Medium** | **Medium** | **Yes (follow-up)** |
+| Morris | O(n) | O(1) | Hard | No | Advanced only |
 
-**Recommendation**:
-1. Start with **Recursive** in interviews
-2. Mention **Iterative** as alternative
-3. Only implement **Morris** if explicitly asked
+**When to Use Each:**
+- **Interview default**: Recursive (clean, simple)
+- **Follow-up asked**: Iterative (shows understanding)
+- **Space critical**: Morris (O(1) space but complex)
 
 ---
 
 ## Key Takeaways
 
-1. **Inorder = Left → Root → Right** (memorize this!)
-2. **BST property**: Inorder gives sorted values
-3. **Recursive is simplest** - 3 lines of code
-4. **Iterative uses stack** - simulates recursion
-5. **Morris is O(1) space** - but complex
-6. **Base case critical** - always check for null
-7. **Order matters** - don't confuse with preorder/postorder
-8. **Space = O(height)** for recursive/iterative
+1. **Inorder**: Left → Root → Right traversal order
+2. **Recursive**: Natural, mirrors tree structure
+3. **Iterative**: Uses explicit stack, same traversal
+4. **BST property**: Inorder gives sorted values
+5. **Go left first**: Core of inorder traversal
+6. **Stack depth**: O(height) = O(log n) to O(n)
+7. **Visit each node once**: O(n) time
+8. **Three traversals**: Preorder, Inorder, Postorder (DFS)
+9. **Morris**: O(1) space using threading (advanced)
+10. **Handle null**: Both null root and null children
 
 ---
 
@@ -745,20 +1487,32 @@ Level-order:[1, 2, 3, 4, 5]  ← Level by level
 
 **What to say in an interview:**
 
-> "For inorder traversal, I need to visit nodes in Left → Root → Right order. I'll use a recursive approach since it's the most natural and clean. The base case is when the node is null. For each node, I recursively traverse the left subtree, add the current node's value, then traverse the right subtree. This gives O(n) time and O(h) space for the recursion stack."
+> "Inorder traversal processes nodes in Left-Root-Right order. The recursive solution is straightforward—we recursively traverse the left subtree, visit the current node, then recursively traverse the right subtree. This naturally matches the tree's recursive structure.
+>
+> For the follow-up iterative solution, I'll use an explicit stack to simulate the recursion. The approach is to go left as far as possible while pushing nodes onto the stack. When we can't go left anymore, we pop a node, process it, and move to its right child. We continue until both the current pointer is null and the stack is empty.
+>
+> Both solutions visit each node exactly once, giving O(n) time complexity. The space complexity is O(h) where h is the tree height—best case O(log n) for balanced trees, worst case O(n) for skewed trees. This is for the call stack in recursion or the explicit stack in the iterative approach.
+>
+> An interesting property is that for binary search trees, inorder traversal gives us the nodes in sorted ascending order, which is useful for problems like validating BSTs or finding the kth smallest element."
 
 **Key points to mention:**
-1. **Define inorder**: Left → Root → Right
-2. **Recursive is natural** - trees are recursive structures
-3. **Base case**: null node returns immediately
-4. **Complexity**: O(n) time, O(h) space
-5. **BST property**: Inorder gives sorted output
+1. **Inorder order**: Left → Root → Right
+2. **Recursive**: Natural, clean, mirrors structure
+3. **Iterative**: Explicit stack, go left → pop → process → go right
+4. **BST property**: Inorder gives sorted values
+5. **Time**: O(n) visit each node once
+6. **Space**: O(h) for stack/recursion
+7. **Both conditions**: `current != null || !stack.isEmpty()`
+8. **Three DFS types**: Preorder, Inorder, Postorder
+9. **Handle null**: Base case or loop condition
+10. **Morris exists**: O(1) space but complex
 
-**If asked for iterative:**
-> "I can also solve this iteratively using a stack. I'll push all left nodes onto the stack, then pop and visit each node, moving to its right child. This simulates the recursion stack explicitly. Same complexity but more control over the stack."
-
-**If asked about space optimization:**
-> "For O(1) space, there's Morris traversal which uses threaded binary tree concept. It temporarily modifies the tree structure to create links, avoiding both recursion and stack. However, it's more complex and rarely needed in practice."
+**Common Follow-ups:**
+- "Can you do it iteratively?" → Yes, with explicit stack
+- "What about space complexity?" → O(h) for both, Morris has O(1)
+- "What's the difference from preorder?" → Order: inorder is L-Root-R, preorder is Root-L-R
+- "For BST, what does inorder give?" → Sorted values in ascending order
+- "Can you do O(1) space?" → Yes, Morris traversal with threading (explain if asked)
 
 ---
 
@@ -766,75 +1520,24 @@ Level-order:[1, 2, 3, 4, 5]  ← Level by level
 
 | Problem | Difficulty | Pattern | Key Difference |
 |---------|-----------|---------|----------------|
-| **Binary Tree Inorder Traversal** | Easy | **Inorder DFS** | **Left → Root → Right** ← This problem |
-| Binary Tree Preorder Traversal | Easy | Preorder DFS | Root → Left → Right |
-| Binary Tree Postorder Traversal | Easy | Postorder DFS | Left → Right → Root |
-| Binary Tree Level Order Traversal | Medium | BFS | Use queue, level by level |
-| Validate Binary Search Tree | Medium | Inorder DFS | Check if inorder is sorted |
-| Kth Smallest Element in BST | Medium | Inorder DFS | Stop after k elements |
-| Binary Search Tree Iterator | Medium | Inorder DFS | Lazy evaluation with stack |
-| Recover Binary Search Tree | Medium | Inorder DFS | Find swapped nodes |
-| Flatten Binary Tree to Linked List | Medium | Preorder/Morris | Tree modification |
+| Binary Tree Preorder Traversal | Easy | DFS | Root → Left → Right |
+| **Binary Tree Inorder Traversal** | Easy | **DFS** | **This problem** |
+| Binary Tree Postorder Traversal | Easy | DFS | Left → Right → Root |
+| Binary Tree Level Order Traversal | Medium | BFS | Level by level |
+| Validate Binary Search Tree | Medium | Inorder | Use inorder to check sorted |
+| Kth Smallest in BST | Medium | Inorder | Stop at kth element |
+| Binary Tree Zigzag Traversal | Medium | BFS Variant | Alternate direction per level |
 
 **Pattern Progression**:
-1. **Basic Traversals** (this problem) - Foundation
-2. **BST Validation** - Apply inorder property
-3. **BST Operations** - Use inorder for sorted access
-4. **Tree Modifications** - Advanced Morris-like techniques
-
----
-
-## Additional Notes
-
-### Why Inorder is Special for BST?
-
-**Binary Search Tree Property:**
-```
-For every node:
-- All left subtree values < node.val
-- All right subtree values > node.val
-```
-
-**Inorder Traversal on BST:**
-```
-Tree (BST):      4
-               /   \
-              2     6
-             / \   / \
-            1   3 5   7
-
-Inorder: [1, 2, 3, 4, 5, 6, 7]  ← SORTED! ✓
-```
-
-This property is used in:
-- **Validating BST**: Check if inorder is strictly increasing
-- **Finding kth element**: Stop inorder after k steps
-- **Range queries**: Prune traversal based on value ranges
-
-### Time Complexity Proof
-
-**Why is Morris Traversal O(n)?**
-
-Even though we revisit some nodes, each edge is traversed at most twice:
-```
-1st pass: Create thread (go down)
-2nd pass: Remove thread (come back up)
-Total: 2 × (n-1) edges = O(n)
-```
-
-### Real-World Applications
-
-1. **Database Indexing**: B-tree inorder traversal
-2. **Expression Trees**: Inorder gives infix notation
-3. **Compiler Design**: AST traversal
-4. **File Systems**: Directory traversal
-5. **Serialization**: Tree to sorted array conversion
+1. **Inorder Traversal** (this) — Learn DFS pattern
+2. **Preorder/Postorder** — Different DFS orders
+3. **Validate BST** — Apply inorder property
+4. **Kth Smallest BST** — Early termination on inorder
 
 ---
 
 ## Final Pattern Label
 
-✅ **Tree Traversal – Inorder DFS (Left → Root → Right)**
+✅ **Depth-First Search (DFS) - Inorder Traversal**
 
-**Remember:** Inorder on BST = Sorted order! Start with recursion, mention iterative as follow-up.
-
+**Remember:** This is **inorder traversal** with order **Left → Root → Right**. **Recursive solution** (simplest): base case `if (node == null) return`, recursive case: process left subtree, add current value, process right subtree. **Iterative solution** (follow-up): use explicit stack, main loop `while (current != null || !stack.isEmpty())`, inner loop goes left pushing nodes `while (current != null) { stack.push(current); current = current.left; }`, then pop and process `current = stack.pop(); result.add(current.val); current = current.right;`. **Time complexity**: O(n) visit each node once. **Space complexity**: O(h) where h = height (call stack or explicit stack), best O(log n) balanced, worst O(n) skewed. **BST property**: inorder traversal gives sorted ascending order (useful for validation, kth smallest). **Common mistakes**: wrong order (preorder vs inorder), iterative loop condition missing `current != null`, not going left first, not moving to right child after pop, wrong traversal type (BFS instead of DFS). **Three DFS orders**: Preorder (Root-L-R), Inorder (L-Root-R), Postorder (L-R-Root). **Morris traversal**: O(1) space using threading but complex, rarely needed. Pattern: **DFS inorder** for ordered tree processing, especially useful for **BST problems**! ✓

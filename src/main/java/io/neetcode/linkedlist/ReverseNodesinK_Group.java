@@ -2,33 +2,39 @@ package io.neetcode.linkedlist;
 
 public class ReverseNodesinK_Group {
     public ListNode reverseKGroup(ListNode head, int k) {
-        ListNode dummy = new ListNode(0);
-        dummy.next = head;
-        ListNode groupPrev = dummy;
+        ListNode dummy = new ListNode(0, head);
+        ListNode pregrp = dummy;
         while (true) {
-            ListNode kth = getKth(groupPrev, k);
-            if (kth == null) break;
-            ListNode groupNext = kth.next;
-            ListNode prev = groupNext;
-            ListNode curr = groupPrev.next;
-            while (curr != groupNext) {
-                ListNode next = curr.next;
-                curr.next = prev;
-                prev = curr;
-                curr = next;
-            }
-            ListNode temp = groupPrev.next;
-            groupPrev.next = kth;
-            groupPrev = temp;
+            ListNode kth = getKth(pregrp.next, k);
+            if (kth == null)
+                break;
+            ListNode postgrp = kth.next;
+            kth.next = null;
+            ListNode rev = pregrp.next;
+            reverse(rev);
+            rev.next = postgrp;
+            pregrp.next = kth;
+            pregrp = rev;
         }
         return dummy.next;
     }
 
     private ListNode getKth(ListNode curr, int k) {
-        while (curr != null && k > 0) {
+        while (curr != null && k > 1) {
             curr = curr.next;
             k--;
         }
         return curr;
+    }
+
+    private void reverse(ListNode head) {
+        ListNode prev = null;
+        ListNode curr = head;
+        while (curr != null) {
+            ListNode next = curr.next;
+            curr.next = prev;
+            prev = curr;
+            curr = next;
+        }
     }
 }
