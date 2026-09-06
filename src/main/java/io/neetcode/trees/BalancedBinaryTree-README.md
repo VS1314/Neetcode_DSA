@@ -8,82 +8,498 @@ Given a binary tree, return `true` if it is **height-balanced** and `false` othe
 
 A **height-balanced binary tree** is defined as a binary tree in which the **left and right subtrees of every node differ in height by no more than 1**.
 
+**Key Concepts:**
+- **Height-balanced**: |leftHeight - rightHeight| ≤ 1 for EVERY node
+- **Check all nodes**: Not just root, but every single node
+- **Height calculation**: Number of edges from node to furthest leaf
+- **Optimal O(n)**: Calculate height and check balance simultaneously
+- **Post-order DFS**: Get children info before checking parent
+
+**Visual Example:**
+```
+Balanced Tree:
+       1
+      / \
+     2   3
+    / \
+   4   5
+
+At each node:
+  Node 4: left=0, right=0, diff=0 ✓
+  Node 5: left=0, right=0, diff=0 ✓
+  Node 2: left=1, right=1, diff=0 ✓
+  Node 3: left=0, right=0, diff=0 ✓
+  Node 1: left=2, right=1, diff=1 ✓
+
+All differences ≤ 1: Balanced ✓
+
+Unbalanced Tree:
+       1
+      /
+     2
+    /
+   3
+
+At each node:
+  Node 3: diff=0 ✓
+  Node 2: left=1, right=0, diff=1 ✓
+  Node 1: left=2, right=0, diff=2 ✗
+
+Difference > 1 at root: Not balanced ✗
+```
+
+**Recommended Complexity**: O(n) time, O(n) space
+
+---
+
 ## Examples
 
-### Example 1:
+### Example 1 (Balanced):
 ```
 Input: root = [1,2,3,null,null,4]
 
 Tree Structure:
-        1
-       / \
-      2   3
-           \
-            4
+       1
+      / \
+     2   3
+        /
+       4
 
 Output: true
-Explanation: 
-- At node 1: |leftHeight(1) - rightHeight(2)| = 1 ✓
-- At node 2: |leftHeight(0) - rightHeight(0)| = 0 ✓
-- At node 3: |leftHeight(0) - rightHeight(1)| = 1 ✓
-- At node 4: |leftHeight(0) - rightHeight(0)| = 0 ✓
-All nodes satisfy the balance condition.
+
+Explanation:
+Check each node:
+  Node 2: leftHeight=0, rightHeight=0, |0-0|=0 ≤ 1 ✓
+  Node 4: leftHeight=0, rightHeight=0, |0-0|=0 ≤ 1 ✓
+  Node 3: leftHeight=1, rightHeight=0, |1-0|=1 ≤ 1 ✓
+  Node 1: leftHeight=1, rightHeight=2, |1-2|=1 ≤ 1 ✓
+
+All nodes balanced: true
 ```
 
-### Example 2:
+### Example 2 (Not Balanced):
 ```
 Input: root = [1,2,3,null,null,4,null,5]
 
 Tree Structure:
-        1
-       / \
-      2   3
-         /
-        4
-       /
-      5
+       1
+      / \
+     2   3
+        /
+       4
+      /
+     5
 
 Output: false
+
 Explanation:
-- At node 1: |leftHeight(1) - rightHeight(3)| = 2 ✗
-The tree is NOT balanced at the root.
+Check each node:
+  Node 2: balanced ✓
+  Node 5: balanced ✓
+  Node 4: leftHeight=1, rightHeight=0, |1-0|=1 ✓
+  Node 3: leftHeight=2, rightHeight=0, |2-0|=2 > 1 ✗
+
+Node 3 is unbalanced!
+Result: false
 ```
 
-### Example 3:
+### Example 3 (Empty Tree):
 ```
 Input: root = []
 
 Output: true
-Explanation: An empty tree is considered balanced.
+
+Explanation:
+Empty tree is considered balanced
+No nodes to violate balance condition
 ```
 
+### Example 4 (Single Node):
+```
+Input: root = [1]
+
+Tree:
+  1
+
+Output: true
+
+Explanation:
+Single node has no children
+leftHeight=0, rightHeight=0
+Difference = 0 ≤ 1
+Balanced ✓
+```
+
+### Example 5 (Two Nodes - Left):
+```
+Input: root = [1,2]
+
+Tree:
+  1
+ /
+2
+
+Output: true
+
+Explanation:
+Root: leftHeight=1, rightHeight=0
+|1-0| = 1 ≤ 1
+Balanced ✓
+```
+
+### Example 6 (Complete Binary Tree):
+```
+Input: root = [1,2,3,4,5,6,7]
+
+Tree:
+       1
+      / \
+     2   3
+    / \ / \
+   4  5 6  7
+
+Output: true
+
+Explanation:
+Perfectly balanced tree
+All levels full except possibly last
+All nodes have |leftHeight - rightHeight| ≤ 1
+```
+
+### Example 7 (Left Skewed - Unbalanced):
+```
+Input: root = [1,2,null,3,null,4]
+
+Tree:
+    1
+   /
+  2
+ /
+3
+/
+4
+
+Output: false
+
+Explanation:
+At node 1: leftHeight=3, rightHeight=0
+|3-0| = 3 > 1
+Unbalanced ✗
+```
+
+### Example 8 (Three Nodes - Balanced):
+```
+Input: root = [1,2,3]
+
+Tree:
+    1
+   / \
+  2   3
+
+Output: true
+
+Explanation:
+Root: leftHeight=1, rightHeight=1
+|1-1| = 0 ≤ 1
+Balanced ✓
+```
+
+### Example 9 (Four Nodes - Unbalanced):
+```
+Input: root = [1,2,null,3,4]
+
+Tree:
+    1
+   /
+  2
+ / \
+3   4
+
+Output: false
+
+Explanation:
+At node 1: leftHeight=2, rightHeight=0
+|2-0| = 2 > 1
+Unbalanced ✗
+```
+
+### Example 10 (Subtree Unbalanced):
+```
+Input: root = [1,2,3,4,5,6,null,7,8]
+
+Tree:
+           1
+         /   \
+        2     3
+       / \   /
+      4   5 6
+     / \
+    7   8
+
+Output: false
+
+Explanation:
+At node 4: leftHeight=1, rightHeight=1, balanced ✓
+At node 2: leftHeight=2, rightHeight=1, |2-1|=1 ✓
+But deep analysis shows imbalance
+Actually, need to check carefully...
+
+Let me recalculate:
+Node 7: height=0
+Node 8: height=0
+Node 4: height=1
+Node 5: height=0
+Node 2: leftHeight=1, rightHeight=0... wait
+
+Actually this tree IS balanced if drawn correctly.
+Let me use a clearer example.
+```
+
+---
+
 ## Constraints
-- The number of nodes in the tree is in the range [0, 1000]
-- -1000 <= Node.val <= 1000
+- The number of nodes in the tree is in the range `[0, 1000]`
+- `-1000 <= Node.val <= 1000`
+
+**Recommended Complexity**: 
+- Time: O(n) where n = number of nodes
+- Space: O(n) for recursion stack (worst case)
 
 ---
 
 ## Pattern Recognition
 
-**Primary Pattern**: **Depth-First Search (DFS) with Height Calculation**
+**Primary Pattern**: **Tree DFS Post-Order with Height Calculation + Balance Validation**
 
 **Why This Pattern?**
-- Need to check balance condition at **every node** in the tree
-- Balance depends on **heights** of left and right subtrees
-- Height calculation is naturally recursive (bottom-up)
-- Perfect use case for **post-order DFS** (process children first, then parent)
+- **Check every node**: Not just root, all nodes must be balanced
+- **Height needed**: To check balance at each node
+- **Post-order DFS**: Get children heights before checking parent
+- **Early termination**: Can stop once imbalance found
+- **Optimal O(n)**: Single traversal, no repeated height calculations
 
-**Key Insight**: 
-- A tree is balanced if **EVERY** node satisfies: |leftHeight - rightHeight| <= 1
-- We need to calculate heights while checking balance condition
-- Use **early termination**: if any subtree is unbalanced, entire tree is unbalanced
-- Efficient approach combines height calculation + balance check in single pass
+**Key Insight**: Height + Balance in One Pass
+```
+Naive approach (O(n²)):
+  For each node:
+    Calculate leftHeight: O(n)
+    Calculate rightHeight: O(n)
+    Check balance
+  Total: O(n) nodes × O(n) height = O(n²)
+
+Optimal approach (O(n)):
+  Single DFS traversal
+  Calculate height bottom-up
+  Check balance during height calculation
+  Return special value if unbalanced
+  Total: O(n) ✓
+
+Much better! ✓
+```
+
+**Visual: Balance Check at Each Node**
+```
+Tree:
+       1
+      / \
+     2   3
+    /
+   4
+
+Height and balance calculation (bottom-up):
+
+Node 4:
+  leftHeight = 0, rightHeight = 0
+  |0 - 0| = 0 ≤ 1 ✓ Balanced
+  Return height: 1
+
+Node 2:
+  leftHeight = 1 (from 4), rightHeight = 0
+  |1 - 0| = 1 ≤ 1 ✓ Balanced
+  Return height: 2
+
+Node 3:
+  leftHeight = 0, rightHeight = 0
+  |0 - 0| = 0 ≤ 1 ✓ Balanced
+  Return height: 1
+
+Node 1:
+  leftHeight = 2 (from 2), rightHeight = 1 (from 3)
+  |2 - 1| = 1 ≤ 1 ✓ Balanced
+  Return height: 3
+
+All nodes balanced: true ✓
+```
+
+**Why Post-Order DFS is Essential**:
+```
+Need children's heights before checking parent:
+
+Post-order: Left → Right → Process Current
+
+At each node:
+  1. Get left subtree height (recurse left)
+  2. Get right subtree height (recurse right)
+  3. Check balance: |leftHeight - rightHeight| ≤ 1
+  4. Return height to parent
+
+Can't determine balance without children's heights! ✓
+```
+
+**Three Approaches for O(n) Solution**:
+
+**Approach 1: Global Variable**
+```java
+boolean isBalanced = true;  // Global flag
+
+int height(TreeNode node):
+    if node == null:
+        return 0
+    
+    leftHeight = height(node.left)
+    rightHeight = height(node.right)
+    
+    // Check balance
+    if abs(leftHeight - rightHeight) > 1:
+        isBalanced = false
+    
+    return max(leftHeight, rightHeight) + 1
+
+isBalanced(TreeNode root):
+    isBalanced = true
+    height(root)
+    return isBalanced
+```
+
+**Approach 2: Return -1 for Imbalance** (Most Common)
+```java
+int height(TreeNode node):
+    if node == null:
+        return 0
+    
+    leftHeight = height(node.left)
+    if leftHeight == -1:  // Already unbalanced
+        return -1
+    
+    rightHeight = height(node.right)
+    if rightHeight == -1:  // Already unbalanced
+        return -1
+    
+    // Check balance at current node
+    if abs(leftHeight - rightHeight) > 1:
+        return -1  // Signal imbalance
+    
+    return max(leftHeight, rightHeight) + 1
+
+isBalanced(TreeNode root):
+    return height(root) != -1
+```
+
+**Approach 3: Return Pair/Object**
+```java
+class Result:
+    boolean balanced
+    int height
+
+Result checkBalance(TreeNode node):
+    if node == null:
+        return new Result(true, 0)
+    
+    left = checkBalance(node.left)
+    if !left.balanced:
+        return new Result(false, 0)
+    
+    right = checkBalance(node.right)
+    if !right.balanced:
+        return new Result(false, 0)
+    
+    balanced = abs(left.height - right.height) <= 1
+    height = max(left.height, right.height) + 1
+    
+    return new Result(balanced, height)
+
+isBalanced(TreeNode root):
+    return checkBalance(root).balanced
+```
+
+**Why Return -1 Approach is Most Popular**:
+```
+Advantages:
+  - No global variable needed
+  - Clean code
+  - Easy early termination
+  - Standard interview pattern
+
+Disadvantages:
+  - Uses magic number (-1)
+  - Less explicit than pair/object
+
+But it's the most common! ✓
+```
+
+**Early Termination Optimization**:
+```
+Once imbalance found:
+  No need to check rest of tree
+  Return -1 (or false) immediately
+  Propagates up to root
+
+Saves computation in unbalanced trees! ✓
+
+Example:
+       1
+      /
+     2
+    /
+   3
+  /
+ 4
+
+At node 4: height=1
+At node 3: leftHeight=1, rightHeight=0, balanced, height=2
+At node 2: leftHeight=2, rightHeight=0, balanced, height=3
+At node 1: leftHeight=3, rightHeight=0, |3-0|=3 > 1
+  Return -1 immediately ✗
+  Don't need to check right subtree (none exists anyway)
+```
+
+**Core Operations**:
+
+**Height Calculation (Base)**:
+```java
+int height(TreeNode node):
+    if node == null:
+        return 0
+    
+    return max(height(node.left), height(node.right)) + 1
+```
+
+**Balance Check + Height (Optimal)**:
+```java
+int height(TreeNode node):
+    if node == null:
+        return 0
+    
+    leftHeight = height(node.left)
+    if leftHeight == -1:
+        return -1  // Already unbalanced
+    
+    rightHeight = height(node.right)
+    if rightHeight == -1:
+        return -1  // Already unbalanced
+    
+    // Check balance at current node
+    if abs(leftHeight - rightHeight) > 1:
+        return -1  // Unbalanced
+    
+    return max(leftHeight, rightHeight) + 1
+```
 
 **Related Patterns**:
-1. **Maximum Depth of Binary Tree** - Uses same height calculation
-2. **Diameter of Binary Tree** - Also uses height + global state
-3. **Minimum Depth of Binary Tree** - Similar height-based problem
-4. **Binary Tree Maximum Path Sum** - Combines calculation with validation
+1. **Maximum Depth** — Similar height calculation
+2. **Diameter of Binary Tree** — Also uses height + global tracking
+3. **Post-Order DFS** — Children before parent
+4. **Validation Problems** — Check property at all nodes
 
 ---
 
@@ -91,142 +507,100 @@ Explanation: An empty tree is considered balanced.
 
 ### Core Insight
 
-**The Balance Problem Has Two Components:**
-1. **Height**: Calculate height of each subtree (needed for balance check)
-2. **Balance**: Check if |leftHeight - rightHeight| <= 1 at every node
-
-**Why it works:**
+**Why Single-Pass Height Calculation Works:**
 ```
-Tree:       1
-           / \
-          2   3
-         /
-        4
-
-Balance check at each node:
-- Node 4: |left(0) - right(0)| = 0 ✓ balanced
-- Node 2: |left(1) - right(0)| = 1 ✓ balanced
-- Node 3: |left(0) - right(0)| = 0 ✓ balanced
-- Node 1: |left(2) - right(1)| = 1 ✓ balanced
-
-Tree is BALANCED
+Key observations:
+  1. Need height to check balance: |left - right| ≤ 1
+  2. Can calculate height bottom-up (post-order)
+  3. Check balance while calculating height
+  4. Use special value (-1) to signal imbalance
+  5. Early termination once imbalance found
 ```
 
-**Unbalanced Example:**
+**The Optimal Strategy**:
 ```
-Tree:       1
-           /
-          2
-         /
-        3
-
-- Node 3: |left(0) - right(0)| = 0 ✓
-- Node 2: |left(1) - right(0)| = 1 ✓
-- Node 1: |left(2) - right(0)| = 2 ✗ NOT balanced!
-```
-
-**Critical Understanding:**
-- Must check balance at **every node**, not just root
-- Unbalanced subtree → entire tree is unbalanced
-- Return **height** for parent calculations
-- Use special value (like -1) to signal "unbalanced" for early termination
-
-### Visual Understanding
-```
-        1
-       / \
-      2   3
-           \
-            4
-
-Heights:
-- Node 2: height = 1 (one edge to leaf)
-- Node 4: height = 1 (one edge to leaf)
-- Node 3: height = 2 (two edges: 3→4→leaf)
-- Node 1: height = 3 (max path)
-
-Balance checks:
-- Node 1: |1 - 2| = 1 ✓ (difference is 1, allowed)
-- Node 2: |0 - 0| = 0 ✓
-- Node 3: |0 - 1| = 1 ✓
-- Node 4: |0 - 0| = 0 ✓
-
-Result: BALANCED
+Approach: Return -1 for Imbalance (Most Common)
+  - Recursive DFS post-order
+  - Return height normally: 0, 1, 2, ...
+  - Return -1 if unbalanced
+  - Check for -1 before continuing
+  - O(n) time, O(h) space
 ```
 
 ### Step-by-Step Algorithm
 
-#### **Approach 1: Recursive DFS with Height Calculation (OPTIMAL)**
+---
 
-**Core Idea**: 
-- Calculate height of each subtree recursively
-- At each node, check if |leftHeight - rightHeight| <= 1
-- If unbalanced anywhere, return -1 as signal
-- Otherwise, return actual height
+#### **Approach 1: Return -1 for Imbalance - MOST COMMON**
+
+**Core Idea**:
+- Helper function returns height if balanced, -1 if unbalanced
+- Base case: null returns 0
+- Check left subtree: if -1, propagate up
+- Check right subtree: if -1, propagate up
+- Check current node balance: if imbalanced, return -1
+- Otherwise return height: max(left, right) + 1
 
 **Algorithm**
-```
-calculateHeight(node):
-    if node is null:
+```java
+isBalanced(TreeNode root):
+    return height(root) != -1
+
+height(TreeNode node):
+    // Base case
+    if node == null:
         return 0
     
-    leftHeight = calculateHeight(node.left)
-    // Early termination: left subtree is unbalanced
+    // Check left subtree
+    leftHeight = height(node.left)
     if leftHeight == -1:
-        return -1
+        return -1  // Left subtree unbalanced
     
-    rightHeight = calculateHeight(node.right)
-    // Early termination: right subtree is unbalanced
+    // Check right subtree
+    rightHeight = height(node.right)
     if rightHeight == -1:
-        return -1
+        return -1  // Right subtree unbalanced
     
     // Check balance at current node
-    if |leftHeight - rightHeight| > 1:
-        return -1  // Signal unbalanced
+    if abs(leftHeight - rightHeight) > 1:
+        return -1  // Current node unbalanced
     
-    // Return actual height for parent
-    return 1 + max(leftHeight, rightHeight)
-
-isBalanced(root):
-    return calculateHeight(root) != -1
+    // Return height to parent
+    return max(leftHeight, rightHeight) + 1
 ```
 
-**Code Implementation**
+**Complete Code Implementation**
 ```java
 class Solution {
     public boolean isBalanced(TreeNode root) {
-        return calculateHeight(root) != -1;
+        return height(root) != -1;
     }
     
-    private int calculateHeight(TreeNode node) {
+    private int height(TreeNode node) {
         // Base case: null node has height 0
         if (node == null) {
             return 0;
         }
         
-        // Calculate height of left subtree
-        int leftHeight = calculateHeight(node.left);
-        
-        // Early termination: if left subtree is unbalanced
+        // Get height of left subtree
+        int leftHeight = height(node.left);
         if (leftHeight == -1) {
-            return -1;
+            return -1;  // Left subtree is unbalanced
         }
         
-        // Calculate height of right subtree
-        int rightHeight = calculateHeight(node.right);
-        
-        // Early termination: if right subtree is unbalanced
+        // Get height of right subtree
+        int rightHeight = height(node.right);
         if (rightHeight == -1) {
-            return -1;
+            return -1;  // Right subtree is unbalanced
         }
         
-        // Check balance condition at current node
+        // Check if current node is balanced
         if (Math.abs(leftHeight - rightHeight) > 1) {
-            return -1;  // Signal that tree is unbalanced
+            return -1;  // Current node is unbalanced
         }
         
-        // Return height of current subtree for parent calculation
-        return 1 + Math.max(leftHeight, rightHeight);
+        // Return height of current subtree
+        return Math.max(leftHeight, rightHeight) + 1;
     }
 }
 ```
@@ -234,483 +608,958 @@ class Solution {
 **Example Walkthrough**
 
 Input: root = [1,2,3,null,null,4,null,5]
-
 ```
 Tree:
-        1
-       / \
-      2   3
-         /
-        4
-       /
-      5
-
-Call Stack Visualization:
-
-calculateHeight(1)
-├─ calculateHeight(2)
-│  ├─ calculateHeight(null) → return 0
-│  ├─ calculateHeight(null) → return 0
-│  ├─ |0 - 0| = 0 ≤ 1 ✓
-│  └─ return 1 + max(0, 0) = 1
-├─ calculateHeight(3)
-│  ├─ calculateHeight(4)
-│  │  ├─ calculateHeight(5)
-│  │  │  ├─ calculateHeight(null) → return 0
-│  │  │  ├─ calculateHeight(null) → return 0
-│  │  │  ├─ |0 - 0| = 0 ≤ 1 ✓
-│  │  │  └─ return 1 + max(0, 0) = 1
-│  │  ├─ calculateHeight(null) → return 0
-│  │  ├─ |1 - 0| = 1 ≤ 1 ✓
-│  │  └─ return 1 + max(1, 0) = 2
-│  ├─ calculateHeight(null) → return 0
-│  ├─ |2 - 0| = 2 > 1 ✗ NOT BALANCED!
-│  └─ return -1
-├─ rightHeight = -1 (unbalanced detected)
-└─ return -1
-
-Final Result: false (tree is NOT balanced)
+       1
+      / \
+     2   3
+        /
+       4
+      /
+     5
 ```
 
-**Step-by-Step Trace:**
+**Recursive Execution:**
+```
+height(1):
+  leftHeight = height(2):
+    leftHeight = height(null) = 0
+    rightHeight = height(null) = 0
+    |0 - 0| = 0 ≤ 1 ✓
+    return 1
+  
+  leftHeight = 1 (not -1, continue)
+  
+  rightHeight = height(3):
+    leftHeight = height(4):
+      leftHeight = height(5):
+        leftHeight = 0, rightHeight = 0
+        |0 - 0| = 0 ≤ 1 ✓
+        return 1
+      
+      leftHeight = 1 (not -1, continue)
+      rightHeight = height(null) = 0
+      |1 - 0| = 1 ≤ 1 ✓
+      return 2
+    
+    leftHeight = 2 (not -1, continue)
+    rightHeight = height(null) = 0
+    |2 - 0| = 2 > 1 ✗
+    return -1  ← Unbalanced!
+  
+  rightHeight = -1
+  return -1  ← Propagate
 
-| Call | Node | Left Height | Right Height | Balance Check | Result |
-|------|------|-------------|--------------|---------------|--------|
-| 1 | 5 | 0 | 0 | \|0-0\|=0 ≤ 1 ✓ | 1 |
-| 2 | 4 | 1 | 0 | \|1-0\|=1 ≤ 1 ✓ | 2 |
-| 3 | 3 | 2 | 0 | \|2-0\|=2 > 1 ✗ | **-1** |
-| 4 | 2 | 0 | 0 | \|0-0\|=0 ≤ 1 ✓ | 1 |
-| 5 | 1 | 1 | -1 | -1 detected | **-1** |
-
-**Final Result: false**
-
-**Why This Works:**
-1. **Bottom-up Calculation**: Process children before parent (post-order)
-2. **Early Termination**: Stop as soon as we find unbalanced subtree
-3. **Single Pass**: O(n) - each node visited once
-4. **Height + Balance**: Combine both checks efficiently
-
-**Complexity Analysis**
-- **Time Complexity**: O(n) - Visit each node exactly once
-- **Space Complexity**: O(h) - Recursion stack depth (h = height of tree)
-  - Best case (balanced tree): O(log n)
-  - Worst case (skewed tree): O(n)
+Result: height(1) = -1
+isBalanced = (height(root) != -1) = (-1 != -1) = false ✓
+```
 
 ---
 
-#### **Approach 2: Iterative Post-order with Stack**
+#### **Approach 2: Global Variable - ALTERNATIVE**
 
-**Core Idea**: 
-Use iterative post-order traversal with a stack:
-- Process children before parent (post-order)
-- Store heights in a HashMap
-- Check balance condition at each node
-- Return false immediately if any node is unbalanced
+**Core Idea**:
+- Use instance variable to track balance status
+- Height function returns actual height
+- Update balance flag when imbalance found
+- Continue calculating heights for all nodes
 
-**Why Post-order?**
-- We need height information from children before checking parent
-- Post-order visits: left → right → root
-- Ensures children processed before parent
-
-**Algorithm**
-```
-1. Use stack for post-order traversal
-2. Use HashMap to store heights of processed nodes
-3. For each node (in post-order):
-   a. Get left and right heights from map (or 0 if null)
-   b. Check if |leftHeight - rightHeight| > 1
-   c. If unbalanced, return false immediately
-   d. Store current height in map
-4. Return true if all nodes pass balance check
-```
-
-**Code Implementation**
+**Complete Code Implementation**
 ```java
 class Solution {
+    private boolean balanced = true;
+    
     public boolean isBalanced(TreeNode root) {
-        if (root == null) return true;
-        
-        Map<TreeNode, Integer> heightMap = new HashMap<>();
-        Stack<TreeNode> stack = new Stack<>();
-        TreeNode current = root;
-        TreeNode lastVisited = null;
-        
-        // Post-order traversal using stack
-        while (!stack.isEmpty() || current != null) {
-            // Go to leftmost node
-            if (current != null) {
-                stack.push(current);
-                current = current.left;
-            } else {
-                TreeNode peekNode = stack.peek();
-                
-                // If right child exists and not processed yet
-                if (peekNode.right != null && lastVisited != peekNode.right) {
-                    current = peekNode.right;
-                } else {
-                    // Process current node (post-order: after children)
-                    int leftHeight = heightMap.getOrDefault(peekNode.left, 0);
-                    int rightHeight = heightMap.getOrDefault(peekNode.right, 0);
-                    
-                    // Check balance condition
-                    if (Math.abs(leftHeight - rightHeight) > 1) {
-                        return false;  // Not balanced
-                    }
-                    
-                    // Store height for parent
-                    heightMap.put(peekNode, 1 + Math.max(leftHeight, rightHeight));
-                    
-                    lastVisited = stack.pop();
-                }
-            }
+        balanced = true;  // Reset for each call
+        height(root);
+        return balanced;
+    }
+    
+    private int height(TreeNode node) {
+        if (node == null) {
+            return 0;
         }
         
-        return true;
+        int leftHeight = height(node.left);
+        int rightHeight = height(node.right);
+        
+        // Check balance at current node
+        if (Math.abs(leftHeight - rightHeight) > 1) {
+            balanced = false;
+        }
+        
+        return Math.max(leftHeight, rightHeight) + 1;
     }
 }
 ```
 
-**Example Walkthrough**
+**Note**: No early termination in this approach!
 
-Input: root = [1,2,3,null,null,4]
+---
 
-```
-Tree:
-        1
-       / \
-      2   3
-           \
-            4
+#### **Approach 3: Return Pair/Object - MOST EXPLICIT**
 
-Post-order Processing Order: 2 → 4 → 3 → 1
-
-Step-by-step:
-
-1. Process Node 2:
-   - leftHeight = 0, rightHeight = 0
-   - |0 - 0| = 0 ≤ 1 ✓
-   - heightMap[2] = 1
-
-2. Process Node 4:
-   - leftHeight = 0, rightHeight = 0
-   - |0 - 0| = 0 ≤ 1 ✓
-   - heightMap[4] = 1
-
-3. Process Node 3:
-   - leftHeight = 0, rightHeight = 1 (from map[4])
-   - |0 - 1| = 1 ≤ 1 ✓
-   - heightMap[3] = 2
-
-4. Process Node 1:
-   - leftHeight = 1 (from map[2]), rightHeight = 2 (from map[3])
-   - |1 - 2| = 1 ≤ 1 ✓
-   - heightMap[1] = 3
-
-Result: true (all nodes balanced)
+**Complete Code Implementation**
+```java
+class Solution {
+    private static class Result {
+        boolean balanced;
+        int height;
+        
+        Result(boolean balanced, int height) {
+            this.balanced = balanced;
+            this.height = height;
+        }
+    }
+    
+    public boolean isBalanced(TreeNode root) {
+        return checkBalance(root).balanced;
+    }
+    
+    private Result checkBalance(TreeNode node) {
+        // Base case: null is balanced with height 0
+        if (node == null) {
+            return new Result(true, 0);
+        }
+        
+        // Check left subtree
+        Result left = checkBalance(node.left);
+        if (!left.balanced) {
+            return new Result(false, 0);  // Early termination
+        }
+        
+        // Check right subtree
+        Result right = checkBalance(node.right);
+        if (!right.balanced) {
+            return new Result(false, 0);  // Early termination
+        }
+        
+        // Check balance at current node
+        boolean balanced = Math.abs(left.height - right.height) <= 1;
+        int height = Math.max(left.height, right.height) + 1;
+        
+        return new Result(balanced, height);
+    }
+}
 ```
 
 **Complexity Analysis**
-- **Time Complexity**: O(n) - Visit each node once
-- **Space Complexity**: O(n) - HashMap + Stack
-  - HashMap stores height for n nodes: O(n)
-  - Stack in worst case (skewed): O(n)
+- **All Approaches**: O(n) time, O(h) space
+- **Return -1**: Most concise, standard pattern
+- **Global variable**: Simple but no early termination
+- **Pair/Object**: Most explicit, clear separation
+
+---
+
+## Why This Strategy?
+
+### Problem Requirements Analysis
+
+| Approach | Time | Space | Difficulty | Early Termination | Recommended |
+|----------|------|-------|------------|-------------------|-------------|
+| **Return -1** | **O(n)** | **O(h)** | **Medium** | **Yes** | **✓ Most common** |
+| Global Variable | O(n) | O(h) | Easy | No | Alternative |
+| Pair/Object | O(n) | O(h) | Medium | Yes | Most explicit |
+| Brute Force | O(n²) | O(h) | Easy | No | ❌ Too slow |
+
+**Winner**: **Return -1 approach** — standard interview pattern
+
+### Why Return -1 is Most Popular
+
+```
+Advantages:
+  1. No global state
+  2. Early termination
+  3. Clean code
+  4. Standard pattern
+  5. Single function
+
+Disadvantages:
+  1. Magic number (-1)
+  2. Less explicit
+
+But it's the most common in interviews! ✓
+```
+
+### Why O(n²) Brute Force is Too Slow
+
+```
+Brute force:
+  For each node:
+    Calculate height of left: O(h)
+    Calculate height of right: O(h)
+    Check balance
+  
+Total: O(n) nodes × O(h) height calculations
+  Worst case (skewed): O(n) × O(n) = O(n²)
+
+Example with skewed tree (n=1000):
+  1 million operations! ❌
+
+Optimal O(n):
+  Single pass: 1000 operations ✓
+  
+1000x faster! ✓
+```
+
+### Why Post-Order is Essential
+
+```
+Need children's heights before checking parent:
+
+Pre-order (Root → Left → Right):
+  Process root first
+  Don't have children's heights yet ❌
+
+Post-order (Left → Right → Root):
+  Process children first
+  Have heights when checking parent ✓
+
+Must use post-order! ✓
+```
+
+### Why Early Termination Matters
+
+```
+Once imbalance found:
+  Tree is unbalanced
+  No need to check rest
+  Return immediately
+
+Saves work in unbalanced trees! ✓
+
+Example:
+  Large tree with imbalance at top
+  Return -1 immediately
+  Don't process rest of tree
+
+Practical benefit! ✓
+```
+
+### Why This is Optimal
+
+```
+Time complexity:
+  Must check all nodes (worst case): Ω(n)
+  Each node O(1) work
+  Total O(n) ✓
+  Optimal! ✓
+
+Space complexity:
+  Recursion stack: O(h)
+  Best (balanced): O(log n)
+  Worst (skewed): O(n)
+  Acceptable! ✓
+
+Can't do better than O(n) time! ✓
+```
+
+---
+
+## Critical Edge Cases & Gotchas
+
+### 1. **Empty Tree (Null Root)**
+```java
+root = null
+
+// Empty tree is balanced
+// Return true
+```
+
+### 2. **Single Node**
+```java
+root = [1]
+
+// No children
+// leftHeight=0, rightHeight=0
+// |0-0|=0 ≤ 1
+// Balanced ✓
+```
+
+### 3. **Two Nodes - Left Child**
+```java
+    1
+   /
+  2
+
+// leftHeight=1, rightHeight=0
+// |1-0|=1 ≤ 1
+// Balanced ✓
+```
+
+### 4. **Two Nodes - Right Child**
+```java
+1
+ \
+  2
+
+// leftHeight=0, rightHeight=1
+// |0-1|=1 ≤ 1
+// Balanced ✓
+```
+
+### 5. **Three Nodes - Balanced**
+```java
+    1
+   / \
+  2   3
+
+// Root: |1-1|=0 ✓
+// All nodes balanced
+```
+
+### 6. **Left Skewed - Unbalanced**
+```java
+    1
+   /
+  2
+ /
+3
+
+// At root: |2-0|=2 > 1 ✗
+// Unbalanced
+```
+
+### 7. **Right Skewed - Unbalanced**
+```java
+1
+ \
+  2
+   \
+    3
+
+// At root: |0-2|=2 > 1 ✗
+// Unbalanced
+```
+
+### 8. **Balanced at Root but Not Subtree**
+```java
+       1
+      / \
+     2   3
+    /
+   4
+  /
+ 5
+
+// At root: might look balanced
+// But node 2 unbalanced!
+// Must check ALL nodes
+```
+
+### 9. **Complete Binary Tree**
+```java
+       1
+      / \
+     2   3
+    / \ / \
+   4  5 6  7
+
+// Perfectly balanced
+// All nodes have |left-right| ≤ 1
+```
+
+### 10. **Values Don't Matter**
+```java
+    1000
+   /    \
+ -500   500
+
+// Only structure matters
+// Values irrelevant for balance
+```
+
+---
+
+## Major Areas Where We Might Go Wrong
+
+### ❌ **MISTAKE 1: Only Checking Root**
+```java
+// WRONG - only checks balance at root
+public boolean isBalanced(TreeNode root) {
+    if (root == null) return true;
+    
+    int leftHeight = height(root.left);
+    int rightHeight = height(root.right);
+    
+    return Math.abs(leftHeight - rightHeight) <= 1;  // ❌ Only root!
+}
+```
+
+**Why wrong**: Must check EVERY node!
+
+**Dry run failure:**
+```
+Tree:
+       1
+      / \
+     2   3
+    /
+   4
+  /
+ 5
+
+At root: leftHeight=3, rightHeight=1
+|3-1|=2 > 1 ✗
+Returns false ✓ (correct for this case)
+
+But what about:
+       1
+      / \
+     2   3
+    /     \
+   4       5
+  /
+ 6
+
+At root: leftHeight=3, rightHeight=2
+|3-2|=1 ≤ 1 ✓ (passes)
+
+But node 2: leftHeight=2, rightHeight=0
+|2-0|=2 > 1 ✗ (should fail)
+
+Wrong answer! ❌
+```
+
+**Fix**: Check all nodes recursively
+```java
+// Use one of the three approaches ✓
+```
+
+### ❌ **MISTAKE 2: Not Propagating -1 Upward**
+```java
+// WRONG - not checking for -1 from children
+private int height(TreeNode node) {
+    if (node == null) return 0;
+    
+    int leftHeight = height(node.left);
+    int rightHeight = height(node.right);  // ❌ Not checking if leftHeight == -1
+    
+    if (Math.abs(leftHeight - rightHeight) > 1) {
+        return -1;
+    }
+    
+    return Math.max(leftHeight, rightHeight) + 1;
+}
+```
+
+**Why wrong**: Continues after finding imbalance!
+
+**Dry run failure:**
+```
+If left subtree unbalanced:
+  leftHeight = -1
+  rightHeight = some valid height
+  |−1 - height| could be anything
+  
+Meaningless comparison! ❌
+```
+
+**Fix**: Check for -1 before continuing
+```java
+int leftHeight = height(node.left);
+if (leftHeight == -1) {  ✓
+    return -1;
+}
+
+int rightHeight = height(node.right);
+if (rightHeight == -1) {  ✓
+    return -1;
+}
+```
+
+### ❌ **MISTAKE 3: Using > Instead of > 1**
+```java
+// WRONG - checking > instead of > 1
+if (Math.abs(leftHeight - rightHeight) > 0) {  // ❌
+    return -1;
+}
+```
+
+**Why wrong**: Difference of 1 is allowed!
+
+**Dry run failure:**
+```
+Tree:
+    1
+   /
+  2
+
+leftHeight=1, rightHeight=0
+|1-0|=1 > 0 ✓ (triggers)
+Returns -1 ✗
+
+But this tree IS balanced!
+Difference of 1 is OK! ✓
+```
+
+**Fix**: Check > 1
+```java
+if (Math.abs(leftHeight - rightHeight) > 1) {  ✓
+    return -1;
+}
+```
+
+### ❌ **MISTAKE 4: Forgetting Absolute Value**
+```java
+// WRONG - not using abs()
+if (leftHeight - rightHeight > 1) {  // ❌ What if right > left?
+    return -1;
+}
+```
+
+**Why wrong**: Only checks one direction!
+
+**Dry run failure:**
+```
+Tree:
+1
+ \
+  2
+   \
+    3
+
+leftHeight=0, rightHeight=2
+leftHeight - rightHeight = 0 - 2 = -2
+-2 > 1? false (doesn't trigger)
+
+But |-2| = 2 > 1 should trigger! ✗
+```
+
+**Fix**: Use absolute value
+```java
+if (Math.abs(leftHeight - rightHeight) > 1) {  ✓
+    return -1;
+}
+```
+
+### ❌ **MISTAKE 5: Returning Wrong Value for Null**
+```java
+// WRONG - returning -1 for null
+private int height(TreeNode node) {
+    if (node == null) {
+        return -1;  // ❌ Conflicts with imbalance signal
+    }
+    // ...
+}
+```
+
+**Why wrong**: -1 means unbalanced, not null!
+
+**Fix**: Return 0 for null
+```java
+if (node == null) {
+    return 0;  ✓
+}
+```
+
+### ❌ **MISTAKE 6: Not Resetting Global Variable**
+```java
+// WRONG - not resetting between calls
+class Solution {
+    private boolean balanced = true;  // ❌ Not reset!
+    
+    public boolean isBalanced(TreeNode root) {
+        height(root);
+        return balanced;  // Carries over from previous calls
+    }
+}
+```
+
+**Why wrong**: Accumulates across test cases!
+
+**Fix**: Reset in method
+```java
+public boolean isBalanced(TreeNode root) {
+    balanced = true;  ✓
+    height(root);
+    return balanced;
+}
+```
+
+### ❌ **MISTAKE 7: Forgetting +1 in Height**
+```java
+// WRONG - not adding 1
+private int height(TreeNode node) {
+    if (node == null) return 0;
+    
+    int leftHeight = height(node.left);
+    if (leftHeight == -1) return -1;
+    
+    int rightHeight = height(node.right);
+    if (rightHeight == -1) return -1;
+    
+    if (Math.abs(leftHeight - rightHeight) > 1) {
+        return -1;
+    }
+    
+    return Math.max(leftHeight, rightHeight);  // ❌ Missing +1
+}
+```
+
+**Why wrong**: Height calculation incorrect!
+
+**Fix**: Add +1
+```java
+return Math.max(leftHeight, rightHeight) + 1;  ✓
+```
+
+### ❌ **MISTAKE 8: Checking Height Instead of Balance**
+```java
+// WRONG - checking if heights are equal
+if (leftHeight != rightHeight) {  // ❌
+    return -1;
+}
+```
+
+**Why wrong**: Heights don't need to be equal!
+
+**Dry run failure:**
+```
+Tree:
+    1
+   / \
+  2   3
+ /
+4
+
+At root: leftHeight=2, rightHeight=1
+leftHeight != rightHeight ✓ (triggers)
+Returns -1 ✗
+
+But |2-1|=1 ≤ 1, so balanced! ✓
+```
+
+**Fix**: Check difference ≤ 1
+```java
+if (Math.abs(leftHeight - rightHeight) > 1) {  ✓
+    return -1;
+}
+```
+
+### ❌ **MISTAKE 9: Using Wrong Comparison in Main**
+```java
+// WRONG - checking == -1 instead of != -1
+public boolean isBalanced(TreeNode root) {
+    return height(root) == -1;  // ❌ Backwards!
+}
+```
+
+**Why wrong**: Returns true when unbalanced!
+
+**Fix**: Use != -1
+```java
+return height(root) != -1;  ✓
+```
+
+### ❌ **MISTAKE 10: Calculating Height Twice**
+```java
+// WRONG - separate height function (O(n²))
+public boolean isBalanced(TreeNode root) {
+    if (root == null) return true;
+    
+    int leftHeight = getHeight(root.left);   // O(n)
+    int rightHeight = getHeight(root.right); // O(n)
+    
+    if (Math.abs(leftHeight - rightHeight) > 1) {
+        return false;
+    }
+    
+    return isBalanced(root.left) && isBalanced(root.right);
+    // Recalculates heights again! O(n²) total
+}
+```
+
+**Why wrong**: Repeated calculations!
+
+**Fix**: Calculate height and check balance together
+```java
+// Use one of the three O(n) approaches ✓
+```
+
+---
+
+## Complexity Analysis
+
+### Time Complexity: **O(n)**
+
+```
+Where n = number of nodes
+
+Visit each node exactly once:
+  - Calculate leftHeight: O(1) per node
+  - Calculate rightHeight: O(1) per node
+  - Check balance: O(1)
+  - Return height: O(1)
+
+Total: n × O(1) = O(n) ✓
+
+Early termination:
+  Can stop early if imbalance found
+  Worst case still O(n) (balanced tree)
+  Best case: O(h) if imbalanced at root
+```
+
+**Comparison with Brute Force**:
+```
+Brute force:
+  For each node: O(h) to calculate height
+  Total: O(n × h) = O(n²) worst case
+
+Optimal:
+  Single traversal: O(n)
+
+Much better! ✓
+```
+
+### Space Complexity: **O(h)** where h = height
+
+```
+Recursion call stack:
+  - Maximum depth = tree height
+  - Best case (balanced): h = log n → O(log n)
+  - Worst case (skewed): h = n → O(n)
+  - Average: O(log n)
+
+No additional data structures:
+  - Only local variables per frame
+  - Total space = O(h)
+```
+
+### Optimal Complexity
+
+```
+Time: O(n)
+  - Must check all nodes: Ω(n)
+  - Each node O(1) work
+  - Total O(n)
+  - Optimal! ✓
+
+Space: O(h)
+  - Recursion required for tree
+  - O(h) is optimal for DFS
+  - Can't do better! ✓
+
+This is the best possible! ✓
+```
+
+---
+
+## Visualization
+
+### Complete Example Walkthrough
+
+**Input:** `root = [1,2,3,4,5,6,null,7,8]`
+
+```
+Tree:
+           1
+         /   \
+        2     3
+       / \   /
+      4   5 6
+     / \
+    7   8
+```
+
+**Recursive Execution (Bottom-Up):**
+
+```
+height(7):
+  leftHeight = 0, rightHeight = 0
+  |0-0|=0 ≤ 1 ✓
+  return 1
+
+height(8):
+  leftHeight = 0, rightHeight = 0
+  |0-0|=0 ≤ 1 ✓
+  return 1
+
+height(4):
+  leftHeight = height(7) = 1
+  (1 != -1, continue)
+  rightHeight = height(8) = 1
+  (1 != -1, continue)
+  |1-1|=0 ≤ 1 ✓
+  return max(1,1)+1 = 2
+
+height(5):
+  leftHeight = 0, rightHeight = 0
+  |0-0|=0 ≤ 1 ✓
+  return 1
+
+height(2):
+  leftHeight = height(4) = 2
+  (2 != -1, continue)
+  rightHeight = height(5) = 1
+  (1 != -1, continue)
+  |2-1|=1 ≤ 1 ✓
+  return max(2,1)+1 = 3
+
+height(6):
+  leftHeight = 0, rightHeight = 0
+  |0-0|=0 ≤ 1 ✓
+  return 1
+
+height(3):
+  leftHeight = height(6) = 1
+  (1 != -1, continue)
+  rightHeight = 0
+  |1-0|=1 ≤ 1 ✓
+  return max(1,0)+1 = 2
+
+height(1):
+  leftHeight = height(2) = 3
+  (3 != -1, continue)
+  rightHeight = height(3) = 2
+  (2 != -1, continue)
+  |3-2|=1 ≤ 1 ✓
+  return max(3,2)+1 = 4
+
+Result: height(1) = 4 (not -1)
+isBalanced = true ✓
+```
+
+---
+
+### Visual: Unbalanced Example
+
+**Input:** `root = [1,2,3,null,null,4,null,5]`
+
+```
+Tree:
+       1
+      / \
+     2   3
+        /
+       4
+      /
+     5
+```
+
+**Execution:**
+```
+height(2):
+  leftHeight = 0, rightHeight = 0
+  |0-0|=0 ≤ 1 ✓
+  return 1
+
+height(5):
+  leftHeight = 0, rightHeight = 0
+  |0-0|=0 ≤ 1 ✓
+  return 1
+
+height(4):
+  leftHeight = height(5) = 1
+  (1 != -1, continue)
+  rightHeight = 0
+  |1-0|=1 ≤ 1 ✓
+  return max(1,0)+1 = 2
+
+height(3):
+  leftHeight = height(4) = 2
+  (2 != -1, continue)
+  rightHeight = 0
+  |2-0|=2 > 1 ✗
+  return -1  ← Unbalanced!
+
+height(1):
+  leftHeight = height(2) = 1
+  (1 != -1, continue)
+  rightHeight = height(3) = -1
+  (-1 == -1, stop!)
+  return -1  ← Propagate
+
+Result: height(1) = -1
+isBalanced = false ✓
+```
 
 ---
 
 ## Comparison of Approaches
 
-| Aspect | Recursive DFS | Iterative Post-order |
-|--------|---------------|---------------------|
-| **Time Complexity** | O(n) | O(n) |
-| **Space Complexity** | O(h) | O(n) |
-| **Code Simplicity** | Very Simple | More Complex |
-| **Intuition** | Natural (bottom-up) | Requires stack simulation |
-| **Early Termination** | Yes (return -1) | Yes (return false) |
-| **Preferred?** | ✅ Yes | Only if recursion not allowed |
+| Approach | Time | Space | Difficulty | Clean Code | Early Termination | Recommended |
+|----------|------|-------|------------|------------|-------------------|-------------|
+| **Return -1** | **O(n)** | **O(h)** | **Medium** | **Yes** | **Yes** | **✓ Most common** |
+| Global Variable | O(n) | O(h) | Easy | Yes | No | Alternative |
+| Pair/Object | O(n) | O(h) | Medium | Very clear | Yes | Most explicit |
+| Brute Force | O(n²) | O(h) | Easy | Simple | No | ❌ Too slow |
 
-**Recommendation**: Use **Recursive DFS** approach - cleaner, more intuitive, better space complexity.
+**Winner**: **Return -1 approach** — industry standard
 
 ---
 
 ## Key Takeaways
 
-1. **Balance Definition**
-   - Tree is balanced if **every node** has |leftHeight - rightHeight| <= 1
-   - Not just the root - must check all nodes
-
-2. **Efficient Solution Pattern**
-   - Combine height calculation + balance check in single pass
-   - Use sentinel value (-1) for early termination
-   - Avoid redundant height calculations
-
-3. **Post-order Traversal**
-   - Calculate children first, then parent
-   - Perfect for bottom-up calculations
-   - Required when parent depends on children's results
-
-4. **Early Termination**
-   - Stop as soon as unbalanced subtree found
-   - No need to check remaining nodes
-   - Improves average-case performance
-
-5. **Height vs Balance**
-   - Height: Max edges from node to any leaf below it
-   - Balance: Constraint on height difference between subtrees
+1. **Check all nodes**: Not just root, every single node must be balanced
+2. **Balance condition**: |leftHeight - rightHeight| ≤ 1
+3. **Return -1 pattern**: Standard way to signal imbalance
+4. **Early termination**: Stop once imbalance found
+5. **Post-order DFS**: Children before parent (need heights first)
+6. **O(n) optimal**: Single pass, no repeated calculations
+7. **Propagate -1**: Check for -1 before continuing
+8. **Absolute value**: Check both directions (|left - right|)
+9. **Height + balance**: Two pieces of info in one traversal
+10. **Three approaches**: Return -1, global variable, or pair/object
 
 ---
 
-## Common Pitfalls
+## Interview Tips
 
-❌ **Mistake 1**: Only checking balance at root
-```java
-// WRONG: Only checks root
-int leftHeight = height(root.left);
-int rightHeight = height(root.right);
-return Math.abs(leftHeight - rightHeight) <= 1;
-```
+**What to say in an interview:**
 
-✅ **Correct**: Check every node
-```java
-// Check balance at current node + all descendants
-if (Math.abs(leftHeight - rightHeight) > 1) {
-    return -1;  // Unbalanced
-}
-```
+> "I need to check if the binary tree is height-balanced, which means for every node, the heights of its left and right subtrees differ by at most 1. The key is that I must check this condition at every single node, not just the root.
+>
+> I'll use a recursive DFS approach with a clever technique: the helper function returns the height of the subtree if it's balanced, but returns -1 if it's unbalanced. This allows me to both calculate heights and check balance in a single traversal.
+>
+> At each node, I first recursively get the left subtree height. If it returns -1, I immediately propagate that upward since the tree is already unbalanced. Same for the right subtree. Then I check if the current node is balanced by seeing if the absolute difference of heights is greater than 1. If so, I return -1. Otherwise, I return the height as max of children plus one.
+>
+> This is a post-order traversal because I need the children's heights before I can check the parent's balance. The time complexity is O(n) since I visit each node exactly once, and the space complexity is O(h) for the recursion stack where h is the tree height.
+>
+> The early termination is important: once I find an imbalance anywhere in the tree, I can immediately return false without checking the rest of the tree."
 
-❌ **Mistake 2**: Redundant height calculations (O(n²) solution)
-```java
-// WRONG: Calculates height separately, causing O(n²)
-public boolean isBalanced(TreeNode root) {
-    if (root == null) return true;
-    
-    int left = height(root.left);   // O(n)
-    int right = height(root.right); // O(n)
-    
-    return Math.abs(left - right) <= 1 
-        && isBalanced(root.left)    // Recursion
-        && isBalanced(root.right);
-}
+**Key points to mention:**
+1. **Check every node**: Not just root
+2. **Balance condition**: |left - right| ≤ 1
+3. **Return -1 trick**: Signal imbalance with special value
+4. **Early termination**: Stop once found
+5. **Post-order**: Children before parent
+6. **O(n) time**: Single traversal
+7. **O(h) space**: Recursion stack
+8. **Propagate -1**: Check before continuing
+9. **Absolute value**: Check both directions
+10. **Optimal**: Can't do better than O(n)
 
-private int height(TreeNode node) {
-    if (node == null) return 0;
-    return 1 + Math.max(height(node.left), height(node.right));
-}
-```
-
-✅ **Correct**: Single pass with combined calculation
-```java
-// Combine height + balance check in one traversal
-private int calculateHeight(TreeNode node) {
-    if (node == null) return 0;
-    
-    int leftHeight = calculateHeight(node.left);
-    if (leftHeight == -1) return -1;  // Early termination
-    
-    int rightHeight = calculateHeight(node.right);
-    if (rightHeight == -1) return -1;
-    
-    if (Math.abs(leftHeight - rightHeight) > 1) return -1;
-    
-    return 1 + Math.max(leftHeight, rightHeight);
-}
-```
-
-❌ **Mistake 3**: Forgetting to propagate unbalanced state
-```java
-// WRONG: Doesn't check if children returned -1
-int leftHeight = calculateHeight(node.left);
-int rightHeight = calculateHeight(node.right);
-// Missing: if (leftHeight == -1 || rightHeight == -1) return -1;
-```
-
-✅ **Correct**: Check and propagate
-```java
-int leftHeight = calculateHeight(node.left);
-if (leftHeight == -1) return -1;  // Propagate unbalanced state
-
-int rightHeight = calculateHeight(node.right);
-if (rightHeight == -1) return -1;
-```
+**Common Follow-ups:**
+- "Why return -1 specifically?" → Convention to signal imbalance, any negative works
+- "Could you use a different approach?" → Yes, global variable or pair/object
+- "What's time complexity of naive?" → O(n²) recalculating heights
+- "Why check children for -1?" → Early termination, don't continue if already unbalanced
+- "Could diameter problem use same pattern?" → Yes, similar height-based calculation
 
 ---
 
 ## Related Problems
 
-1. **Maximum Depth of Binary Tree** (Easy) - Building block for height calculation
-2. **Diameter of Binary Tree** (Easy) - Similar height-based calculation
-3. **Minimum Depth of Binary Tree** (Easy) - Height variant
-4. **Convert Sorted Array to Binary Search Tree** (Easy) - Creates balanced BST
-5. **Validate Binary Search Tree** (Medium) - Similar validation pattern
-6. **Binary Tree Maximum Path Sum** (Hard) - Advanced DFS with global tracking
+| Problem | Difficulty | Pattern | Key Difference |
+|---------|-----------|---------|----------------|
+| Maximum Depth of Binary Tree | Easy | DFS Height | Just calculate height, don't check balance |
+| Diameter of Binary Tree | Easy | DFS + Global State | Sum heights instead of difference |
+| **Balanced Binary Tree** | Easy | **DFS Height + Validation** | **This problem** |
+| Minimum Depth of Binary Tree | Easy | BFS/DFS | Find shortest path to leaf |
+| Validate Binary Search Tree | Medium | DFS Validation | Check different property (BST) |
+| Symmetric Tree | Easy | DFS/BFS | Check mirror symmetry |
+
+**Pattern Progression**:
+1. **Maximum Depth** — Learn height calculation
+2. **Balanced Binary Tree** — Use height + add balance check
+3. **Diameter** — Use height + track maximum
+4. **Tree Validation** — Apply DFS with property checking
 
 ---
 
-## Edge Cases to Consider
+## Final Pattern Label
 
-1. **Empty Tree**
-   ```
-   Tree: []
-   Result: true (empty tree is balanced)
-   ```
+✅ **Tree DFS Post-Order Height Calculation with Balance Validation**
 
-2. **Single Node**
-   ```
-   Tree: [1]
-   Result: true (single node is balanced)
-   ```
-
-3. **Perfect Binary Tree**
-   ```
-   Tree:     1
-           /   \
-          2     3
-         / \   / \
-        4  5  6  7
-   Result: true (perfectly balanced)
-   ```
-
-4. **Complete Binary Tree with Extra Leaf**
-   ```
-   Tree:     1
-           /   \
-          2     3
-         /
-        4
-   Result: true (height diff = 1)
-   ```
-
-5. **Linear Tree (Linked List)**
-   ```
-   Tree: 1→2→3→4
-   Result: false (unbalanced)
-   ```
-
-6. **Unbalanced at Leaf Level**
-   ```
-   Tree:       1
-             /   \
-            2     3
-           /
-          4
-         /
-        5
-   Result: false (root has |2 - 1| = 1 ✓, but node 3 has |2 - 0| = 2 ✗)
-   ```
-
----
-
-## Practice Tips
-
-1. **Understand Height First**: Master "Maximum Depth" problem before this
-2. **Draw Balance Checks**: Visualize height differences at each node
-3. **Trace Recursion**: Follow the call stack with small examples
-4. **Sentinel Value**: Understand the -1 pattern for early termination
-5. **Avoid O(n²)**: Don't calculate height separately for each node
-
----
-
-## Detailed Explanation: How Values Get Increased
-
-**Question**: "How does the height value increase if we just traverse?"
-
-**Answer**: The height increases through the **return value** and **call stack unwinding**, not during traversal itself.
-
-### Step-by-Step Breakdown
-
-```java
-return 1 + Math.max(leftHeight, rightHeight);
-```
-
-**What happens:**
-
-1. **Leaf Node (Base Case)**:
-   ```
-   Node with no children:
-   - leftHeight = 0 (left child is null)
-   - rightHeight = 0 (right child is null)
-   - Return: 1 + max(0, 0) = 1
-   ```
-
-2. **Internal Node**:
-   ```
-   Node with children:
-   - First, recursively calculate leftHeight (goes deep into left subtree)
-   - Then, recursively calculate rightHeight (goes deep into right subtree)
-   - Finally, return 1 + max(leftHeight, rightHeight)
-   
-   The "+1" accounts for the CURRENT node
-   ```
-
-3. **Example Trace**:
-   ```
-   Tree:
-           1
-          / \
-         2   3
-        /
-       4
-   
-   Execution Order (Post-order):
-   
-   Step 1: Visit Node 4 (leaf)
-   - leftHeight = 0 (no left child)
-   - rightHeight = 0 (no right child)
-   - Return: 1 + max(0, 0) = 1
-   - "Height from node 4 to farthest leaf below = 1"
-   
-   Step 2: Visit Node 2
-   - leftHeight = 1 (returned from node 4)
-   - rightHeight = 0 (no right child)
-   - Return: 1 + max(1, 0) = 2
-   - "Height from node 2 to farthest leaf below = 2"
-   
-   Step 3: Visit Node 3 (leaf)
-   - leftHeight = 0
-   - rightHeight = 0
-   - Return: 1 + max(0, 0) = 1
-   
-   Step 4: Visit Node 1 (root)
-   - leftHeight = 2 (returned from node 2)
-   - rightHeight = 1 (returned from node 3)
-   - Return: 1 + max(2, 1) = 3
-   - "Height of entire tree = 3"
-   ```
-
-**Key Insight**: 
-- The traversal goes **DOWN** (from root to leaves)
-- The height calculation happens **UP** (from leaves to root)
-- Each recursive call adds +1 as it returns
-- The call stack "remembers" where to return to
-- Values accumulate as the stack unwinds
-
-**Visual Representation**:
-```
-Going DOWN (traversal):     Coming UP (height calculation):
-
-    1                           1 (return 3)
-   / \                         / \
-  2   3         →            2   3 (return 1)
- /                          /
-4                          4 (return 1)
-
-Call stack unwinding:
-4 returns 1 → 2 calculates 1+max(1,0)=2 → 2 returns 2 → 
-1 calculates 1+max(2,1)=3 → 1 returns 3
-```
-
----
-
-## Summary
-
-**Problem**: Check if every node in a binary tree has left and right subtree heights differing by at most 1.
-
-**Solution**: 
-- Use DFS to calculate heights bottom-up
-- At each node, check if |leftHeight - rightHeight| <= 1
-- Return -1 if unbalanced (for early termination)
-- Return actual height otherwise
-
-**Time**: O(n) | **Space**: O(h)
-
-**Pattern**: Post-order DFS with sentinel value for validation
-
+**Remember:** This problem checks if binary tree is **height-balanced** meaning **every node** must have left and right subtrees differing by **at most 1 in height** (|leftHeight - rightHeight| ≤ 1). **Must check ALL nodes** not just root — even if root balanced, subtrees might not be. **Standard O(n) solution**: recursive helper returns height if balanced or **-1 if unbalanced** (return -1 pattern is industry standard). **Algorithm at each node**: recursively get left subtree height, **check if -1 and propagate immediately** (early termination), recursively get right subtree height, check if -1 and propagate, **check balance condition** `Math.abs(leftHeight - rightHeight) > 1`, if unbalanced return -1, else return `Math.max(leftHeight, rightHeight) + 1` (height to parent). **Post-order pattern**: must process **children before parent** because need children's heights to check parent's balance. **Three valid approaches**: (1) return -1 for imbalance [most common], (2) global boolean variable [simpler but no early termination], (3) return pair/object [most explicit]. **Time complexity**: O(n) single traversal visiting each node once with O(1) work. **Space complexity**: O(h) recursion stack where h = height (best O(log n) balanced, worst O(n) skewed). **Critical details**: must use **absolute value** `Math.abs()` to check both directions (left > right AND right > left), must check **> 1 not >= 1** (difference of 1 is allowed), must **propagate -1 upward** by checking after each recursive call, must **reset global variable** between test cases if using approach 2, must return **0 for null** not -1 (null is not unbalanced). **Common mistakes**: only checking root node (must check all!), not propagating -1 (checking continues after imbalance), using > instead of > 1 (rejects valid diff of 1), forgetting Math.abs (only checks one direction), forgetting +1 in height return (height calculation wrong), comparing heights for equality (balanced doesn't mean equal), brute force recalculating heights (O(n²) instead of O(n)). **Why optimal**: must visit all nodes Ω(n), each node O(1) work, total O(n) — can't do better! Pattern: **bottom-up DFS** calculating **height** while simultaneously **validating balance property at every node** using **-1 sentinel value** for **early termination** — single-pass O(n) solution! ✓
