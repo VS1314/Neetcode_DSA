@@ -6,13 +6,55 @@
 
 Given the roots of two binary trees `p` and `q`, return `true` if the trees are **equivalent**, otherwise return `false`.
 
-Two binary trees are considered **equivalent** if they:
-1. Share the **exact same structure** (same shape)
-2. Have the **same values** at corresponding nodes
+Two binary trees are considered **equivalent** (or the **same**) if they satisfy two conditions simultaneously:
+1. They share the **exact same structural shape**.
+2. Corresponding nodes at identical positions contain the **exact same values**.
+
+**Key Concepts:**
+- **Simultaneous Traversal**: Traverse both trees `p` and `q` in lockstep.
+- **Structural Identity**: Every node present in `p` must be present in `q`, and every `null` in `p` must be `null` in `q`.
+- **Value Identity**: If both nodes exist, `p.val == q.val`.
+- **Recursive Base Cases**:
+  - Both `null` $\rightarrow$ `true` (both subtrees are empty and identical)
+  - One `null`, one non-`null` $\rightarrow$ `false` (structural mismatch)
+  - Values differ $\rightarrow$ `false` (value mismatch)
+- **Recursive Step**: `isSameTree(p.left, q.left) && isSameTree(p.right, q.right)`
+
+**Visual Overview:**
+```
+Tree p:                 Tree q:
+       1                       1
+      / \                     / \
+     2   3                   2   3
+
+At Node (1, 1): Values match (1 == 1) ✓
+  Recurse Left: (2, 2) -> Values match (2 == 2) ✓
+    Recurse Left: (null, null) -> true ✓
+    Recurse Right: (null, null) -> true ✓
+  Recurse Right: (3, 3) -> Values match (3 == 3) ✓
+    Recurse Left: (null, null) -> true ✓
+    Recurse Right: (null, null) -> true ✓
+
+Result: true (Identical structure and values)
+
+Mismatch Example (Structure):
+Tree p:                 Tree q:
+       1                       1
+      /                         \
+     2                           2
+
+At Node (1, 1): Values match (1 == 1) ✓
+  Recurse Left: (2, null) -> Structural Mismatch ✗ -> false
+Result: false
+```
+
+**Recommended Complexity**: O(n) time, O(n) space (where n is the minimum/maximum number of nodes in the trees).
+
+---
 
 ## Examples
 
-### Example 1:
+### Example 1 (Identical Trees):
 ```
 Input: p = [1,2,3], q = [1,2,3]
 
@@ -22,10 +64,16 @@ Tree p:          Tree q:
   2   3            2   3
 
 Output: true
-Explanation: Both trees have identical structure and values.
+
+Explanation:
+- Roots match: p.val = 1, q.val = 1
+- Left subtrees match: p.left.val = 2, q.left.val = 2
+- Right subtrees match: p.right.val = 3, q.right.val = 3
+- All leaves have null children matching null children
+Result: true
 ```
 
-### Example 2:
+### Example 2 (Structural Mismatch - Left vs Right Child):
 ```
 Input: p = [4,7], q = [4,null,7]
 
@@ -35,10 +83,15 @@ Tree p:          Tree q:
   7                    7
 
 Output: false
-Explanation: Structures differ - p has left child, q has right child.
+
+Explanation:
+- Roots match: p.val = 4, q.val = 4
+- Checking left subtrees: p.left (7) vs q.left (null) -> mismatch!
+One node is present while the other is null.
+Result: false
 ```
 
-### Example 3:
+### Example 3 (Value Mismatch):
 ```
 Input: p = [1,2,3], q = [1,3,2]
 
@@ -48,679 +101,606 @@ Tree p:          Tree q:
   2   3            3   2
 
 Output: false
-Explanation: Structures are same but values at corresponding positions differ.
-- p's left child is 2, q's left child is 3 ✗
+
+Explanation:
+- Roots match: 1 == 1
+- Left subtrees: p.left.val = 2, q.left.val = 3 -> 2 != 3 -> mismatch!
+Result: false
 ```
 
-### Example 4:
+### Example 4 (Both Empty Trees):
 ```
-Input: p = [1,2], q = [1,null,2]
+Input: p = [], q = []
+
+Tree p: null     Tree q: null
+
+Output: true
+
+Explanation:
+Both roots are null. Two empty trees are identical.
+```
+
+### Example 5 (One Empty Tree, One Non-Empty):
+```
+Input: p = [], q = [1]
+
+Tree p: null     Tree q: 1
+
+Output: false
+
+Explanation:
+p is null while q is not null. Structural mismatch at root level.
+```
+
+### Example 6 (Single Identical Node):
+```
+Input: p = [1], q = [1]
+
+Tree p: 1        Tree q: 1
+
+Output: true
+
+Explanation:
+p.val = 1, q.val = 1. Both left and right children are null.
+```
+
+### Example 7 (Single Node with Different Values):
+```
+Input: p = [1], q = [2]
+
+Tree p: 1        Tree q: 2
+
+Output: false
+
+Explanation:
+p.val = 1 != q.val = 2. Value mismatch.
+```
+
+### Example 8 (Multi-level Skewed Identical Trees):
+```
+Input: p = [1,2,null,3], q = [1,2,null,3]
 
 Tree p:          Tree q:
     1                1
-   /                  \
-  2                    2
+   /                /
+  2                2
+ /                /
+3                3
 
-Output: false
-Explanation: Different structures (left vs right child).
+Output: true
+
+Explanation:
+Both trees are left-skewed with identical values (1 -> 2 -> 3) at each depth.
 ```
 
+### Example 9 (Multi-level Deep Value Mismatch at Leaf):
+```
+Input: p = [1,2,3,4,5], q = [1,2,3,4,6]
+
+Tree p:             Tree q:
+       1                   1
+      / \                 / \
+     2   3               2   3
+    / \                 / \
+   4   5               4   6
+
+Output: false
+
+Explanation:
+All nodes match until comparing right child of node 2: p has 5, q has 6 -> mismatch!
+```
+
+### Example 10 (Different Sized Trees):
+```
+Input: p = [1,2,3,4], q = [1,2,3]
+
+Tree p:             Tree q:
+       1                   1
+      / \                 / \
+     2   3               2   3
+    /
+   4
+
+Output: false
+
+Explanation:
+p has node 4 as left child of 2, whereas q has null as left child of 2.
+```
+
+---
+
 ## Constraints
-- 0 <= The number of nodes in both trees <= 100
-- -100 <= Node.val <= 100
+- The number of nodes in both trees is in the range `[0, 100]`.
+- `-100 <= Node.val <= 100`
+
+**Recommended Complexity**:
+- Time: $O(\min(N, M))$ where $N$ and $M$ are the number of nodes in trees `p` and `q`. We visit nodes simultaneously and stop at the first mismatch.
+- Space: $O(\min(H_p, H_q))$ where $H_p, H_q$ are the tree heights, representing the recursion stack (up to $O(N)$ in skewed trees).
 
 ---
 
 ## Pattern Recognition
 
-**Primary Pattern**: **Simultaneous Tree Traversal with Comparison**
+**Primary Pattern**: **Simultaneous Tree DFS / Dual Tree Traversal**
 
 **Why This Pattern?**
-- Need to compare **corresponding nodes** in both trees
-- Must traverse **both trees in parallel** (same order)
-- Check three conditions at each step: structure match, value match, null handling
-- Perfect use case for **recursive DFS** (compare current, then compare subtrees)
+- We need to compare two tree structures node-by-node.
+- Synchronized recursive traversal (Pre-order DFS) allows us to validate the root first, and only if valid, explore both left subtrees and right subtrees in parallel.
+- Short-circuit evaluation (`&&`) ensures that as soon as any mismatch is detected, recursion unwinds immediately without traversing the remainder of the trees.
 
-**Key Insight**: 
-- Two trees are same if:
-  1. Both are null → true (base case)
-  2. One is null, other isn't → false (structure mismatch)
-  3. Values differ → false (value mismatch)
-  4. Values match AND left subtrees match AND right subtrees match → true
+```
+       Dual Tree DFS Pattern Template:
+       
+       isSame(p, q):
+         1. Base Cases:
+            - If both p and q are null -> return true
+            - If one is null or p.val != q.val -> return false
+         2. Recursive Calls:
+            - return isSame(p.left, q.left) && isSame(p.right, q.right)
+```
 
-**Related Patterns**:
-1. **Symmetric Tree** - Similar comparison logic but compares tree with its mirror
-2. **Subtree of Another Tree** - Similar tree matching logic
-3. **Merge Two Binary Trees** - Simultaneous traversal of two trees
-4. **Tree Traversal** - DFS/BFS patterns
+**Key Architectural Insights**:
+1. **Three Fundamental States at Any Step**:
+   - **Both Null**: Subtrees are structurally identical and empty $\rightarrow$ `return true`.
+   - **One Null / Value Mismatch**: Subtrees violate identity $\rightarrow$ `return false`.
+   - **Both Non-Null & Values Match**: Current nodes match $\rightarrow$ recursively verify `(p.left, q.left)` AND `(p.right, q.right)`.
+
+2. **Pre-Order Evaluation Order**:
+   - Checking `p.val == q.val` before recursing on children is effectively a **Pre-order DFS** (`Root -> Left -> Right`).
+   - If root values or structures don't match, we fail early without visiting subtrees.
+
+3. **Breadth-First Search (BFS) Alternative**:
+   - We can also traverse both trees level-by-level using a single queue or two queues.
+   - Enqueue pairs `(p_node, q_node)`.
+   - Dequeue and validate structure and values at each iteration.
 
 ---
 
 ## Algorithm & Approach
 
-### Core Insight
+### Approach 1: Recursive DFS (Simultaneous Pre-Order) — Recommended / Optimal
 
-**The Comparison Problem Has Three Checks:**
-1. **Both null**: Trees are same (base case - empty trees match)
-2. **One null**: Trees differ in structure (mismatch)
-3. **Both non-null**: Check if values match AND recursively check subtrees
+#### Method Explanation:
+1. If both `p` and `q` are `null`, return `true`.
+2. If `p == null || q == null` (meaning exactly one is null since step 1 failed), return `false`.
+3. If `p.val != q.val`, return `false`.
+4. Recursively check if `isSameTree(p.left, q.left)` AND `isSameTree(p.right, q.right)`.
 
-**Why it works:**
-```
-Compare p and q:
-1. If both null → Same ✓
-2. If only one null → Different ✗
-3. If p.val ≠ q.val → Different ✗
-4. If values match → Check left subtrees AND right subtrees
-
-Recursive nature ensures all corresponding nodes are checked
-```
-
-**Decision Flow:**
-
-```
-Step 1: Check if both null
-├─ YES → return true ✓
-└─ NO → Continue to Step 2
-
-Step 2: Check if one is null
-├─ YES → return false ✗ (structure mismatch)
-└─ NO → Continue to Step 3
-
-Step 3: Check if values differ
-├─ YES → return false ✗ (value mismatch)
-└─ NO → Continue to Step 4
-
-Step 4: Check subtrees recursively
-└─ return isSame(left) AND isSame(right)
-```
-
-**Complete Truth Table:**
-
-| Case | Tree p | Tree q | Values Match? | Left Subtrees? | Right Subtrees? | Final Result |
-|------|--------|--------|---------------|----------------|-----------------|--------------|
-| 1 | `null` | `null` | - | - | - | ✅ `true` |
-| 2 | `null` | `node` | - | - | - | ❌ `false` |
-| 3 | `node` | `null` | - | - | - | ❌ `false` |
-| 4 | `node` | `node` | ❌ No | - | - | ❌ `false` |
-| 5 | `node` | `node` | ✅ Yes | ❌ `false` | - | ❌ `false` |
-| 6 | `node` | `node` | ✅ Yes | ✅ `true` | ❌ `false` | ❌ `false` |
-| 7 | `node` | `node` | ✅ Yes | ✅ `true` | ✅ `true` | ✅ `true` |
-
-**Key:** Only Case 7 returns `true` - when ALL conditions are met!
-
-**Critical Understanding:**
-- Must check **all three conditions**: both null, one null, values match
-- Use **AND logic**: ALL conditions must be true for trees to be same
-- **Short-circuit evaluation**: If current nodes differ, no need to check subtrees
-
-### Visual Understanding
-```
-Example: p = [1,2,3], q = [1,2,3]
-
-    p: 1         q: 1
-      / \          / \
-     2   3        2   3
-
-Step-by-step comparison:
-1. Compare roots: p(1) == q(1) ✓
-2. Compare left subtrees:
-   - p(2) == q(2) ✓
-   - p(2).left == null, q(2).left == null ✓
-   - p(2).right == null, q(2).right == null ✓
-3. Compare right subtrees:
-   - p(3) == q(3) ✓
-   - p(3).left == null, q(3).left == null ✓
-   - p(3).right == null, q(3).right == null ✓
-
-Result: true
-```
-
-**Failure Example:**
-```
-Example: p = [1,2], q = [1,null,2]
-
-    p: 1         q: 1
-      /            \
-     2              2
-
-Comparison:
-1. Compare roots: p(1) == q(1) ✓
-2. Compare left subtrees:
-   - p.left = node(2), q.left = null ✗
-   
-Result: false (structure mismatch)
-```
-
-### Step-by-Step Algorithm
-
-#### **Approach 1: Recursive DFS (OPTIMAL)**
-
-**Core Idea**: 
-- Traverse both trees simultaneously using recursion
-- At each step, check if current nodes match (null handling + value check)
-- Recursively verify left and right subtrees match
-
-**Algorithm**
-```
-isSameTree(p, q):
-    // Case 1: Both null → trees are same
-    if p is null AND q is null:
-        return true
-    
-    // Case 2: One null, other not → different structure
-    if p is null OR q is null:
-        return false
-    
-    // Case 3: Values differ → not same
-    if p.val != q.val:
-        return false
-    
-    // Case 4: Values match → check subtrees recursively
-    return isSameTree(p.left, q.left) AND isSameTree(p.right, q.right)
-```
-
-**Code Implementation**
+#### Java Code Implementation:
 ```java
-class Solution {
+/**
+ * Definition for a binary tree node.
+ * public class TreeNode {
+ *     int val;
+ *     TreeNode left;
+ *     TreeNode right;
+ *     TreeNode() {}
+ *     TreeNode(int val) { this.val = val; }
+ *     TreeNode(int val, TreeNode left, TreeNode right) {
+ *         this.val = val;
+ *         this.left = left;
+ *         this.right = right;
+ *     }
+ * }
+ */
+public class SameBinaryTree {
+
+    /**
+     * Determines if two binary trees are structurally identical and have matching node values.
+     * 
+     * @param p Root of the first binary tree
+     * @param q Root of the second binary tree
+     * @return true if trees are identical, false otherwise
+     */
     public boolean isSameTree(TreeNode p, TreeNode q) {
-        // Case 1: Both trees are empty - they are the same
+        // Base case 1: Both nodes are null -> identical empty subtrees
         if (p == null && q == null) {
             return true;
         }
-        
-        // Case 2: One tree is empty, the other is not - different structure
-        if (p == null || q == null) {
+
+        // Base case 2: One node is null, or node values do not match
+        if (p == null || q == null || p.val != q.val) {
             return false;
         }
-        
-        // Case 3: Values at current nodes differ - not the same
-        if (p.val != q.val) {
-            return false;
-        }
-        
-        // Case 4: Values match - recursively check left and right subtrees
-        // Trees are same only if BOTH left and right subtrees are same
+
+        // Recursive case: Validate both left and right subtrees in parallel
         return isSameTree(p.left, q.left) && isSameTree(p.right, q.right);
     }
 }
 ```
-
-**Alternative - Concise Version**
-```java
-class Solution {
-    public boolean isSameTree(TreeNode p, TreeNode q) {
-        // Both null → same
-        if (p == null && q == null) return true;
-        
-        // One null or values differ → not same
-        if (p == null || q == null || p.val != q.val) return false;
-        
-        // Check both subtrees
-        return isSameTree(p.left, q.left) && isSameTree(p.right, q.right);
-    }
-}
-```
-
-**Example Walkthrough**
-
-Input: p = [1,2,3], q = [1,2,3]
-
-```
-Tree p:          Tree q:
-    1                1
-   / \              / \
-  2   3            2   3
-
-Call Stack Visualization:
-
-isSameTree(p:1, q:1)
-├─ p(1) != null, q(1) != null ✓
-├─ p.val(1) == q.val(1) ✓
-├─ isSameTree(p:2, q:2)
-│  ├─ p(2) != null, q(2) != null ✓
-│  ├─ p.val(2) == q.val(2) ✓
-│  ├─ isSameTree(p:null, q:null)
-│  │  └─ both null → return true
-│  ├─ isSameTree(p:null, q:null)
-│  │  └─ both null → return true
-│  └─ return true && true = true
-├─ isSameTree(p:3, q:3)
-│  ├─ p(3) != null, q(3) != null ✓
-│  ├─ p.val(3) == q.val(3) ✓
-│  ├─ isSameTree(p:null, q:null)
-│  │  └─ both null → return true
-│  ├─ isSameTree(p:null, q:null)
-│  │  └─ both null → return true
-│  └─ return true && true = true
-└─ return true && true = true
-
-Final Result: true
-```
-
-**Step-by-Step Trace:**
-
-| Call | p | q | Both Null? | One Null? | Values Match? | Result |
-|------|---|---|------------|-----------|---------------|--------|
-| 1 | 1 | 1 | No | No | Yes (1==1) | Continue |
-| 2 | 2 | 2 | No | No | Yes (2==2) | Continue |
-| 3 | null | null | Yes | - | - | **true** |
-| 4 | null | null | Yes | - | - | **true** |
-| 5 | 2's result | - | - | - | - | true && true = **true** |
-| 6 | 3 | 3 | No | No | Yes (3==3) | Continue |
-| 7 | null | null | Yes | - | - | **true** |
-| 8 | null | null | Yes | - | - | **true** |
-| 9 | 3's result | - | - | - | - | true && true = **true** |
-| 10 | 1's result | - | - | - | - | true && true = **true** |
-
-**Final Result: true**
-
-**Failure Case Walkthrough**
-
-Input: p = [4,7], q = [4,null,7]
-
-```
-Tree p:          Tree q:
-    4                4
-   /                  \
-  7                    7
-
-Call Stack:
-
-isSameTree(p:4, q:4)
-├─ p(4) != null, q(4) != null ✓
-├─ p.val(4) == q.val(4) ✓
-├─ isSameTree(p:7, q:null)
-│  ├─ p(7) != null, but q == null
-│  └─ return false ✗
-└─ return false (short-circuit)
-
-Final Result: false
-```
-
-**Why This Works:**
-1. **Base Case**: Both null → matching empty subtrees
-2. **Structure Check**: One null → different structure
-3. **Value Check**: Different values → not same
-4. **Recursive Check**: Verify all subtrees match
-
-**Complexity Analysis**
-- **Time Complexity**: O(min(n, m)) - Visit nodes until mismatch found
-  - Best case: O(1) - roots differ
-  - Worst case: O(n) - all nodes match (n = min number of nodes)
-- **Space Complexity**: O(min(h₁, h₂)) - Recursion stack depth
-  - Best case (balanced): O(log n)
-  - Worst case (skewed): O(n)
 
 ---
 
-#### **Approach 2: Iterative BFS with Queue**
+### Approach 2: Iterative BFS using a Queue
 
-**Core Idea**: 
-Use level-order traversal (BFS) to compare trees:
-- Use a queue to store pairs of nodes from both trees
-- Process pairs one by one, checking if they match
-- Add children pairs to queue for further comparison
+#### Method Explanation:
+1. Use a `Queue<TreeNode>` to store pairs of corresponding nodes from `p` and `q`.
+2. Push `p` and `q` into the queue.
+3. While the queue is not empty:
+   - Poll `nodeP` and `nodeQ`.
+   - If both are `null`, continue to the next pair.
+   - If one is `null` or `nodeP.val != nodeQ.val`, return `false`.
+   - Enqueue `nodeP.left` and `nodeQ.left`.
+   - Enqueue `nodeP.right` and `nodeQ.right`.
+4. If the queue becomes empty without finding any discrepancy, return `true`.
 
-**Why BFS?**
-- Compare trees level by level
-- Can detect mismatches early (level-by-level comparison)
-- Iterative approach avoids recursion overhead
-
-**Algorithm**
-```
-1. Use queue to store pairs (nodeP, nodeQ)
-2. Start with roots: queue.add((p, q))
-3. While queue not empty:
-   a. Dequeue pair (nodeP, nodeQ)
-   b. If both null → continue (matching empty nodes)
-   c. If one null → return false (structure mismatch)
-   d. If values differ → return false (value mismatch)
-   e. Add children pairs to queue: (nodeP.left, nodeQ.left), (nodeP.right, nodeQ.right)
-4. If queue empties without finding mismatch → return true
-```
-
-**Code Implementation**
+#### Java Code Implementation:
 ```java
-class Solution {
+import java.util.LinkedList;
+import java.util.Queue;
+
+public class SameBinaryTreeBFS {
+
     public boolean isSameTree(TreeNode p, TreeNode q) {
-        // Use queue to store pairs of nodes to compare
-        Queue<TreeNode[]> queue = new LinkedList<>();
-        queue.offer(new TreeNode[]{p, q});
-        
+        Queue<TreeNode> queue = new LinkedList<>();
+        queue.offer(p);
+        queue.offer(q);
+
         while (!queue.isEmpty()) {
-            TreeNode[] pair = queue.poll();
-            TreeNode nodeP = pair[0];
-            TreeNode nodeQ = pair[1];
-            
-            // Both null - continue to next pair
+            TreeNode nodeP = queue.poll();
+            TreeNode nodeQ = queue.poll();
+
+            // Both null at this position
             if (nodeP == null && nodeQ == null) {
                 continue;
             }
-            
-            // One is null - structure mismatch
-            if (nodeP == null || nodeQ == null) {
+
+            // One is null or values differ
+            if (nodeP == null || nodeQ == null || nodeP.val != nodeQ.val) {
                 return false;
             }
-            
-            // Values differ - not same
-            if (nodeP.val != nodeQ.val) {
-                return false;
-            }
-            
-            // Add children pairs for comparison
-            queue.offer(new TreeNode[]{nodeP.left, nodeQ.left});
-            queue.offer(new TreeNode[]{nodeP.right, nodeQ.right});
+
+            // Add left children pair
+            queue.offer(nodeP.left);
+            queue.offer(nodeQ.left);
+
+            // Add right children pair
+            queue.offer(nodeP.right);
+            queue.offer(nodeQ.right);
         }
-        
+
         return true;
     }
 }
 ```
 
-**Example Walkthrough**
+---
 
-Input: p = [1,2,3], q = [1,2,3]
+### Approach 3: Iterative DFS using a Stack
+
+#### Method Explanation:
+1. Use an explicit `Deque<TreeNode>` or `Stack<TreeNode>` to simulate recursion.
+2. Push `p` and `q`.
+3. Pop pairs, validate identically to the BFS approach, and push matching children pairs onto the stack.
+
+#### Java Code Implementation:
+```java
+import java.util.ArrayDeque;
+import java.util.Deque;
+
+public class SameBinaryTreeDFS {
+
+    public boolean isSameTree(TreeNode p, TreeNode q) {
+        Deque<TreeNode> stack = new ArrayDeque<>();
+        stack.push(p);
+        stack.push(q);
+
+        while (!stack.isEmpty()) {
+            TreeNode nodeQ = stack.pop();
+            TreeNode nodeP = stack.pop();
+
+            if (nodeP == null && nodeQ == null) {
+                continue;
+            }
+
+            if (nodeP == null || nodeQ == null || nodeP.val != nodeQ.val) {
+                return false;
+            }
+
+            // Push right children pair
+            stack.push(nodeP.right);
+            stack.push(nodeQ.right);
+
+            // Push left children pair
+            stack.push(nodeP.left);
+            stack.push(nodeQ.left);
+        }
+
+        return true;
+    }
+}
+```
+
+---
+
+## Why This Strategy?
+
+### Comparison of Approaches
+
+| Criteria | Recursive DFS | Iterative BFS (Queue) | Iterative DFS (Stack) |
+| :--- | :--- | :--- | :--- |
+| **Lines of Code** | **~6 lines (Extremely clean)** | ~25 lines | ~25 lines |
+| **Time Complexity** | $O(\min(N, M))$ | $O(\min(N, M))$ | $O(\min(N, M))$ |
+| **Space Complexity** | $O(H)$ recursion stack | $O(W)$ tree width | $O(H)$ explicit stack |
+| **Early Exit** | Immediate on mismatch | Immediate on mismatch | Immediate on mismatch |
+| **Stack Overflow Risk** | Only if $H > 10,000$ | None (Heap memory) | None (Heap memory) |
+| **Interview Recommendation**| ⭐ **Top Choice** | Great follow-up discussion | Great alternative |
+
+### Why Recursive DFS is Preferred in Interviews:
+1. **Mathematical Elegance**: A tree is naturally a recursively defined data structure. Two trees $T_1$ and $T_2$ are equivalent if and only if:
+   $$\text{Root}(T_1) \equiv \text{Root}(T_2) \land \text{Left}(T_1) \equiv \text{Left}(T_2) \land \text{Right}(T_1) \equiv \text{Right}(T_2)$$
+2. **Conciseness**: The logic reduces to 3 base conditions and 1 return statement.
+3. **Short-Circuiting**: The logical `&&` automatically skips evaluating the right subtree if the left subtree fails.
+
+---
+
+## Critical Edge Cases & Gotchas
+
+### 1. Both Trees Empty (`p = null, q = null`)
+- **Expected Result**: `true`
+- **Handling**: `if (p == null && q == null) return true;` must precede any access to `p.val` or `q.val`.
+
+### 2. One Tree Empty, One Non-Empty (`p = null, q = [1]` or `p = [1], q = null`)
+- **Expected Result**: `false`
+- **Handling**: Caught by `if (p == null || q == null) return false;`.
+
+### 3. Structural Mirror Symmetry Instead of Equivalence (`p = [1, 2, null]`, `q = [1, null, 2]`)
+- **Expected Result**: `false`
+- **Handling**: Traversing `(p.left, q.left)` compares node `2` with `null`, returning `false`.
+
+### 4. Same Values in Inorder/Preorder but Different Shapes
+- Tree 1: `1 -> left: 2` vs Tree 2: `2 -> right: 1`
+- **Handling**: Position-by-position recursion checks exact child slot matching.
+
+### 5. Single Node Trees with Negative Values
+- Nodes with `-100` must match `-100`. In Java, primitive `int` comparison `p.val != q.val` handles negative values safely.
+
+### 6. Deep Left-Skewed Tree vs Deep Right-Skewed Tree
+- Both have same sequence of values, but completely opposite branch directions. Synchronized pair check fails at depth 1.
+
+### 7. Large Trees with Value Mismatch at the Last Leaf
+- Full traversal required; algorithm executes in $O(N)$ without redundant overhead.
+
+### 8. Null Children Handling in Iterative Approaches
+- Using standard `LinkedList` in Java allows inserting `null` references into `Queue`. If using `ArrayDeque`, `null` is forbidden (`NullPointerException`), so `LinkedList` or a custom Pair wrapper is mandatory.
+
+---
+
+## Major Areas Where We Might Go Wrong
+
+### ❌ Mistake 1: NullPointerException on Property Access
+```java
+// WRONG: If p is null and q is null, p.val throws NullPointerException!
+if (p.val != q.val) return false;
+if (p == null && q == null) return true;
+```
+**Correction**: Always evaluate `null` checks before dereferencing `.val`, `.left`, or `.right`.
+
+---
+
+### ❌ Mistake 2: Missing the Single-Null Condition
+```java
+// WRONG: If p is null and q is not null, p.val throws NPE!
+if (p == null && q == null) return true;
+if (p.val != q.val) return false; // Throws NPE when one is null!
+```
+**Correction**:
+```java
+if (p == null && q == null) return true;
+if (p == null || q == null) return false; // One is null, other is not
+if (p.val != q.val) return false;
+```
+
+---
+
+### ❌ Mistake 3: Comparing Left Child with Right Child (Symmetric Tree Confusion)
+```java
+// WRONG: This checks for mirror symmetry, NOT same tree!
+return isSameTree(p.left, q.right) && isSameTree(p.right, q.left);
+```
+**Correction**: Compare corresponding branches: `(p.left, q.left)` and `(p.right, q.right)`.
+
+---
+
+### ❌ Mistake 4: Using `||` instead of `&&` in the Recursive Step
+```java
+// WRONG: Returns true if EITHER left or right subtree matches!
+return isSameTree(p.left, q.left) || isSameTree(p.right, q.right);
+```
+**Correction**: Both subtrees must be identical $\rightarrow$ `&&`.
+
+---
+
+### ❌ Mistake 5: Using `ArrayDeque` with `null` Elements in Iterative BFS
+```java
+// WRONG: ArrayDeque does NOT permit null elements!
+Queue<TreeNode> queue = new ArrayDeque<>();
+queue.offer(nodeP.left); // Throws NullPointerException if left child is null!
+```
+**Correction**: Use `LinkedList` for queue or filter non-null nodes with structural validations before insertion.
+
+---
+
+### ❌ Mistake 6: Prematurely Returning `true` Without Checking Subtrees
+```java
+// WRONG: Returning true as soon as roots match!
+if (p.val == q.val) return true; // Ignores children completely!
+```
+**Correction**: Matching root values is necessary but not sufficient; both children must also match.
+
+---
+
+### ❌ Mistake 7: Comparing Object Identity Instead of Node Value
+```java
+// WRONG: If TreeNode values were boxed Integer objects, == checks reference equality!
+if (p.val != q.val) ... // (Safe for primitive int, but bug if val was Object/Integer outside cache range)
+```
+**Correction**: For `int`, `!=` is fine. If `val` were `Integer`, use `!p.val.equals(q.val)`.
+
+---
+
+### ❌ Mistake 8: Forgetting to Check Both Left and Right Subtrees
+```java
+// WRONG: Left subtree evaluated, right subtree forgotten
+boolean leftSame = isSameTree(p.left, q.left);
+return leftSame; // Ignores p.right and q.right!
+```
+
+---
+
+### ❌ Mistake 9: Incorrect Base Case Ordering
+Combining all conditions into a single condensed statement is elegant, but order of evaluation matters due to short-circuit logic:
+```java
+// CORRECT condensed form:
+if (p == null && q == null) return true;
+if (p == null || q == null || p.val != q.val) return false;
+```
+
+---
+
+### ❌ Mistake 10: Modifying Tree Nodes During Comparison
+Tree comparison algorithms must be **read-only**; never modify `p.left`, `p.val`, etc. during traversal.
+
+---
+
+## Complexity Analysis
+
+### Time Complexity: $O(\min(N, M))$
+- $N$ is the number of nodes in tree `p`, and $M$ is the number of nodes in tree `q`.
+- In the worst case (both trees are identical), the algorithm visits every node in both trees exactly once: $O(N)$ operations.
+- In the best/average case (trees differ early), the algorithm terminates immediately at the first mismatched node without visiting remaining nodes: $O(\min(N, M))$.
+
+### Space Complexity: $O(\min(H_p, H_q))$
+- Space is determined by the call stack depth in recursive DFS, or queue size in BFS.
+- **Balanced Binary Tree**: Height $H = O(\log N)$, so stack space is $O(\log N)$.
+- **Completely Skewed Tree (Worst Case)**: Height $H = O(N)$, so stack space is $O(N)$.
+- **Iterative BFS Space**: $O(W)$ where $W$ is maximum width of the tree, which can be up to $O(N/2) = O(N)$ for a full binary tree.
+
+---
+
+## Visualization
+
+### Step-by-Step Recursive Trace
+
+Comparing Tree `p` and Tree `q`:
+```
+Tree p:                 Tree q:
+       1                       1
+      / \                     / \
+     2   3                   2   3
+```
+
+```mermaid
+flowchart TD
+    A["isSameTree(p=1, q=1)"] -->|Match, Recurse Left| B["isSameTree(p=2, q=2)"]
+    A -->|Match, Recurse Right| C["isSameTree(p=3, q=3)"]
+    
+    B -->|Match, Recurse Left| D["isSameTree(null, null) -> true"]
+    B -->|Match, Recurse Right| E["isSameTree(null, null) -> true"]
+    
+    C -->|Match, Recurse Left| F["isSameTree(null, null) -> true"]
+    C -->|Match, Recurse Right| G["isSameTree(null, null) -> true"]
+    
+    B -->|true && true| H["Node 2 returns true"]
+    C -->|true && true| I["Node 3 returns true"]
+    
+    A -->|true && true| J["Root 1 returns true"]
+```
+
+---
+
+### Step-by-Step Mismatch Trace
+
+Comparing Tree `p = [1, 2]` and Tree `q = [1, null, 2]`:
+```
+Tree p:                 Tree q:
+       1                       1
+      /                         \
+     2                           2
+```
 
 ```
-Tree p:          Tree q:
-    1                1
-   / \              / \
-  2   3            2   3
+Step 1: isSameTree(p=1, q=1)
+        p != null and q != null
+        p.val == q.val (1 == 1) -> Proceed to left children.
 
-BFS Processing:
+Step 2: isSameTree(p=2, q=null)
+        p != null, but q == null
+        Condition (p == null || q == null) triggers!
+        Return false immediately!
 
-Initial: queue = [(1,1)]
-
-Step 1: Process (1,1)
-- Both non-null ✓
-- Values: 1 == 1 ✓
-- Add pairs: (2,2), (3,3)
-- queue = [(2,2), (3,3)]
-
-Step 2: Process (2,2)
-- Both non-null ✓
-- Values: 2 == 2 ✓
-- Add pairs: (null,null), (null,null)
-- queue = [(3,3), (null,null), (null,null)]
-
-Step 3: Process (3,3)
-- Both non-null ✓
-- Values: 3 == 3 ✓
-- Add pairs: (null,null), (null,null)
-- queue = [(null,null), (null,null), (null,null), (null,null)]
-
-Step 4-7: Process all (null,null) pairs
-- Both null → continue
-
-Queue empty → return true
+Step 3: Root receives false from left subtree.
+        Due to short-circuit '&&', right subtree is never visited.
+        Final Result: false
 ```
-
-**Complexity Analysis**
-- **Time Complexity**: O(min(n, m)) - Process nodes until mismatch
-- **Space Complexity**: O(min(n, m)) - Queue stores node pairs
-  - In worst case (complete tree): O(n/2) = O(n) for last level
 
 ---
 
 ## Comparison of Approaches
 
-| Aspect | Recursive DFS | Iterative BFS |
-|--------|---------------|---------------|
-| **Time Complexity** | O(min(n,m)) | O(min(n,m)) |
-| **Space Complexity** | O(h) | O(n) |
-| **Code Simplicity** | Very Simple | Moderate |
-| **Intuition** | Natural (recursive comparison) | Requires queue management |
-| **Early Termination** | Yes | Yes |
-| **Traversal Order** | Depth-first | Level-by-level |
-| **Preferred?** | ✅ Yes | Alternative approach |
-
-**Recommendation**: Use **Recursive DFS** approach - cleaner, more intuitive, better space complexity.
+```
++------------------------+-------------------+--------------------+------------------------+
+| Feature                | Recursive DFS     | Iterative BFS      | Iterative DFS          |
++------------------------+-------------------+--------------------+------------------------+
+| Code Length            | ~5 lines          | ~25 lines          | ~25 lines              |
+| Memory Location        | Call Stack        | Heap (Queue)       | Heap (Stack)           |
+| Best Case Time         | O(1)              | O(1)               | O(1)                   |
+| Worst Case Time        | O(N)              | O(N)               | O(N)                   |
+| Space (Balanced)       | O(log N)          | O(N)               | O(log N)               |
+| Space (Skewed)         | O(N)              | O(1)               | O(N)                   |
+| Null Element Support   | Native            | Requires LinkedList| Requires LinkedList    |
++------------------------+-------------------+--------------------+------------------------+
+```
 
 ---
 
 ## Key Takeaways
 
-1. **Three Conditions to Check**
-   - Both null → same (base case)
-   - One null → different structure
-   - Values differ → not same
-   - All match → check subtrees
-
-2. **Simultaneous Traversal**
-   - Traverse both trees in parallel
-   - Compare corresponding nodes at each step
-   - Use same traversal order for both trees
-
-3. **AND Logic**
-   - Trees are same only if ALL checks pass
-   - Current nodes match AND left subtrees match AND right subtrees match
-   - One failure → entire comparison fails
-
-4. **Early Termination**
-   - Stop as soon as mismatch found
-   - No need to check remaining nodes
-   - Improves average-case performance
-
-5. **Structure vs Value**
-   - Structure: Tree shape (where nodes are positioned)
-   - Value: Data stored in nodes
-   - Both must match for trees to be same
+1. **Simultaneous Traversal**: Two trees are compared by walking both simultaneously node-by-node.
+2. **Order of Base Checks Matters**:
+   - Both null $\rightarrow$ identical (`true`).
+   - One null or values unequal $\rightarrow$ different (`false`).
+3. **Short-Circuit Evaluation**: Using `&&` ensures that the right subtree is only checked if the left subtree matched.
+4. **Structural & Value Equality**: Both topology (presence/absence of children) and data values must align 100%.
+5. **Universal Tree Problem Foundation**: Same Tree is the direct foundation for:
+   - *Symmetric Tree* (Mirror equivalence)
+   - *Subtree of Another Tree* (Calls `isSameTree` repeatedly)
+   - *Serialize and Deserialize Binary Tree*
 
 ---
 
-## Common Pitfalls
+## Interview Tips
 
-❌ **Mistake 1**: Not handling null cases properly
-```java
-// WRONG: Doesn't check if one is null
-if (p.val != q.val) return false;  // NPE if p or q is null!
-```
+- **Clarifying Questions to Ask**:
+  1. "Can either or both trees be empty (`null`)?" (Yes, constraint says node count $\ge 0$).
+  2. "Are node values restricted to 32-bit integers?" (Yes, between -100 and 100).
+  3. "Should two empty trees be considered equivalent?" (Yes, returns `true`).
 
-✅ **Correct**: Check null cases first
-```java
-if (p == null && q == null) return true;
-if (p == null || q == null) return false;  // One is null
-if (p.val != q.val) return false;
-```
+- **Explaining Your Solution to the Interviewer**:
+  > *"I will solve this by simultaneously traversing both trees using recursive Depth-First Search. At each step, I verify three conditions: First, if both nodes are null, this branch is identical, so I return true. Second, if only one node is null, or if their values differ, there is a structural or value mismatch, so I return false. Finally, if the root values match, I recursively verify that both the left subtrees and the right subtrees match using a logical AND. This runs in $O(\min(N, M))$ time and $O(H)$ space for the recursion stack."*
 
-❌ **Mistake 2**: Using OR instead of AND for subtrees
-```java
-// WRONG: Trees are same if EITHER subtree matches
-return isSameTree(p.left, q.left) || isSameTree(p.right, q.right);
-```
-
-✅ **Correct**: Both subtrees must match
-```java
-return isSameTree(p.left, q.left) && isSameTree(p.right, q.right);
-```
-
-❌ **Mistake 3**: Only comparing values, ignoring structure
-```java
-// WRONG: Only checks values, not positions
-if (p.val == q.val) {
-    return true;
-}
-```
-
-✅ **Correct**: Check values at corresponding positions
-```java
-if (p.val != q.val) return false;
-// Must also check left and right subtrees match
-return isSameTree(p.left, q.left) && isSameTree(p.right, q.right);
-```
-
-❌ **Mistake 4**: Incorrect null comparison
-```java
-// WRONG: Incorrect logic
-if (p == null || q == null) {
-    return p == q;  // Comparing references, not checking equality
-}
-```
-
-✅ **Correct**: Proper null handling
-```java
-if (p == null && q == null) return true;   // Both null → same
-if (p == null || q == null) return false;  // One null → different
-```
+- **Follow-up Questions & How to Answer**:
+  - *Q: What if the trees are extremely deep and we hit stack overflow?*
+    - **A**: "We can convert the recursive approach to an iterative BFS using a queue or iterative DFS using an explicit heap-allocated stack."
+  - *Q: How does this differ from checking if a tree is symmetric?*
+    - **A**: "In `isSameTree`, we compare `p.left` with `q.left` and `p.right` with `q.right`. In `isSymmetric`, we compare `left.left` with `right.right` and `left.right` with `right.left`."
 
 ---
 
 ## Related Problems
 
-1. **Symmetric Tree** (Easy) - Check if tree is mirror of itself
-2. **Subtree of Another Tree** (Easy) - Check if one tree is subtree of another
-3. **Merge Two Binary Trees** (Easy) - Combine two trees
-4. **Leaf-Similar Trees** (Easy) - Compare leaf sequences
-5. **Flip Equivalent Binary Trees** (Medium) - Trees same with allowed flips
-6. **Binary Tree Paths** (Easy) - Find all root-to-leaf paths
+| Problem | Difficulty | Key Connection |
+| :--- | :--- | :--- |
+| **Symmetric Tree** | Easy | Compares a single tree's left subtree to its right subtree in mirror order. |
+| **Subtree of Another Tree** | Easy | Repeatedly runs `isSameTree(root, subRoot)` for every node in the main tree. |
+| **Invert Binary Tree** | Easy | Swaps left and right children recursively. |
+| **Flip Equivalent Binary Trees** | Medium | Allows branches to match either directly or flipped. |
+| **Merge Two Binary Trees** | Easy | Traverses two trees simultaneously to compute node sums. |
 
 ---
 
-## Edge Cases to Consider
+## Final Pattern Label
 
-1. **Both Trees Empty**
-   ```
-   p = [], q = []
-   Result: true (two empty trees are same)
-   ```
+✅ **Dual-Tree Simultaneous Pre-Order DFS Traversal**
 
-2. **One Tree Empty**
-   ```
-   p = [1], q = []
-   Result: false (different structure)
-   ```
-
-3. **Single Node - Same Value**
-   ```
-   p = [1], q = [1]
-   Result: true
-   ```
-
-4. **Single Node - Different Value**
-   ```
-   p = [1], q = [2]
-   Result: false
-   ```
-
-5. **Same Structure, Different Values**
-   ```
-   p = [1,2,3], q = [1,2,4]
-   Result: false (right child differs)
-   ```
-
-6. **Different Structure, Same Values**
-   ```
-   p = [1,2], q = [1,null,2]
-   Result: false (left vs right child)
-   ```
-
-7. **Mirror Trees**
-   ```
-   p = [1,2,3], q = [1,3,2]
-   Result: false (mirrored structure)
-   ```
-
-8. **Identical Trees**
-   ```
-   p = [1,2,3,4,5], q = [1,2,3,4,5]
-   Result: true
-   ```
-
----
-
-## Practice Tips
-
-1. **Draw Both Trees**: Visualize the trees side by side
-2. **Trace Recursion**: Follow the comparison step by step
-3. **Test Null Cases**: Always test with null nodes
-4. **Structure First**: Check if structures match before comparing values
-5. **Use AND Logic**: Remember both subtrees must match
-
----
-
-## Detailed Explanation: Why AND Logic?
-
-**Question**: "Why do we use AND (&&) for combining left and right subtree comparisons?"
-
-**Answer**: Trees are same **only if ALL parts match** - current node, left subtree, AND right subtree.
-
-### Truth Table Explanation
-
-```
-For trees to be same:
-- Current nodes must match ✓
-- Left subtrees must match ✓
-- Right subtrees must match ✓
-
-If ANY check fails → trees are different
-```
-
-**Example:**
-```
-p:  1          q:  1
-   / \            / \
-  2   3          2   4
-
-Current: 1 == 1 ✓
-Left: 2 == 2 ✓
-Right: 3 != 4 ✗
-
-Result: true && true && false = FALSE
-
-Even though roots and left subtrees match,
-RIGHT subtree differs → trees are NOT same
-```
-
-**Why not OR?**
-```
-Using OR would mean:
-"Trees are same if left subtree matches OR right subtree matches"
-
-This is WRONG because:
-p:  1          q:  1
-   / \            / \
-  2   9          9   3
-
-Left: 2 != 9 ✗
-Right: 9 != 3 ✗
-
-With OR: false || false = false ✓ (works here)
-
-But consider:
-p:  1          q:  1
-   / \            / \
-  2   3          2   9
-
-Left: 2 == 2 ✓
-Right: 3 != 9 ✗
-
-With OR: true || false = true ✗ (WRONG! Trees are different)
-```
-
-**Correct Logic - AND:**
-```java
-return isSameTree(p.left, q.left) && isSameTree(p.right, q.right);
-
-// Both must be true:
-// - true && true = true ✓
-// - true && false = false ✓
-// - false && true = false ✓
-// - false && false = false ✓
-```
-
----
-
-## Summary
-
-**Problem**: Determine if two binary trees have identical structure and values.
-
-**Solution**: 
-- Use recursive DFS to traverse both trees simultaneously
-- At each step: check null cases, compare values, recurse on subtrees
-- Return true only if ALL checks pass (AND logic)
-
-**Time**: O(min(n,m)) | **Space**: O(h)
-
-**Pattern**: Simultaneous tree traversal with comparison logic
-
+**Summary**: Dual-Tree DFS checks both trees `p` and `q` simultaneously in lockstep. Base cases check `(p == null && q == null) -> true` and `(p == null || q == null || p.val != q.val) -> false`. The recursive step combines `isSameTree(p.left, q.left) && isSameTree(p.right, q.right)` to achieve optimal $O(N)$ time and $O(H)$ space.
