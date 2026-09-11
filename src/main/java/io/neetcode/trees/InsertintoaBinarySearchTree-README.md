@@ -4,500 +4,481 @@
 
 **Difficulty**: Medium
 
-You are given the **root node of a binary search tree (BST)** and a value `val` to insert into the tree. Return the **root node of the BST** after the insertion. It is guaranteed that the new value does not exist in the original BST.
+You are given the `root` node of a binary search tree (BST) and a value `val` to insert into the tree. Return the root node of the BST after the insertion. It is **guaranteed** that the new value does not exist in the original BST.
 
-**Note**: There may exist multiple valid ways for the insertion, as long as the tree remains a BST after insertion. You can return any of them.
+**Note:** There may exist multiple valid ways for the insertion, as long as the tree remains a BST after insertion. You can return any of them. The standard and simplest way is to insert the new node as a **new leaf node**.
+
+**Key Concepts:**
+- **BST Invariant**: For every node $N$, values in the left subtree are $< N.val$, and values in the right subtree are $> N.val$.
+- **Leaf Insertion Principle**:
+  - Compare `val` with `curr.val`.
+  - If `val < curr.val`:
+    - If `curr.left == null`, attach `new TreeNode(val)` to `curr.left` and finish.
+    - Else, move `curr = curr.left`.
+  - If `val > curr.val`:
+    - If `curr.right == null`, attach `new TreeNode(val)` to `curr.right` and finish.
+    - Else, move `curr = curr.right`.
+- **Base Case (Empty Tree)**: If `root == null`, return `new TreeNode(val)`.
+
+**Visual Overview:**
+```
+Original BST (val = 6):
+             5
+           /   \
+          3     9
+         / \
+        1   4
+
+Step 1: Compare 6 with root 5 -> 6 > 5 -> Move Right to Node 9
+Step 2: Compare 6 with node 9 -> 6 < 9 -> Left child of 9 is null!
+Step 3: Attach new TreeNode(6) to node 9's left child.
+
+Resulting BST:
+             5
+           /   \
+          3     9
+         / \   /
+        1   4 6
+```
+
+**Recommended Complexity**:
+- Time: $O(h)$ where $h$ is the height of the BST ($O(\log n)$ average for balanced tree, $O(n)$ worst case for skewed tree).
+- Space: $O(1)$ auxiliary space for iterative insertion, or $O(h)$ call stack for recursive insertion.
+
+---
 
 ## Examples
 
-### Example 1:
+### Example 1 (Standard Leaf Insertion):
 ```
 Input: root = [5,3,9,1,4], val = 6
 
-Before Insertion:          After Insertion:
-        5                         5
-       / \                       / \
-      3   9                     3   9
-     / \                       / \ /
-    1   4                     1  4 6
+Tree before insertion:
+        5
+      /   \
+     3     9
+    / \
+   1   4
+
+Tree after insertion:
+        5
+      /   \
+     3     9
+    / \   /
+   1   4 6
 
 Output: [5,3,9,1,4,6]
-Explanation: 6 < 9 → go left of 9 → insert as left child of 9.
+
+Explanation:
+6 > 5 -> go right to 9.
+6 < 9 -> 9.left is null, attach 6 as left child of 9.
 ```
 
-### Example 2:
+### Example 2 (Deep Skewed Insertion):
 ```
 Input: root = [5,3,6,null,4,null,10,null,null,7], val = 9
 
-Before Insertion:               After Insertion:
-        5                               5
-       / \                             / \
-      3   6                           3   6
-       \   \                           \   \
-        4   10                          4   10
-           /                               /
-          7                               7
-                                           \
-                                            9
+Tree before insertion:
+    5
+   / \
+  3   6
+   \   \
+    4   10
+       /
+      7
+
+Tree after insertion:
+    5
+   / \
+  3   6
+   \   \
+    4   10
+       /
+      7
+       \
+        9
 
 Output: [5,3,6,null,4,null,10,null,null,7,null,null,9]
-Explanation: 9 > 5 → right, 9 > 6 → right, 9 < 10 → left,
-             9 > 7 → insert as right child of 7.
+
+Explanation:
+9 > 5 -> right (6) -> 9 > 6 -> right (10) -> 9 < 10 -> left (7) -> 9 > 7 -> right (null) -> attach 9 as 7.right.
 ```
 
-### Example 3:
+### Example 3 (Empty Tree):
 ```
 Input: root = [], val = 5
 
 Output: [5]
-Explanation: Empty tree → new node becomes the root.
+
+Explanation:
+Original tree is null, so new node with value 5 becomes the root.
 ```
 
+### Example 4 (Single Node Tree - Insert Left):
+```
+Input: root = [4], val = 2
+
+Output: [4,2]
+
+Explanation:
+2 < 4, attached to 4.left.
+```
+
+### Example 5 (Single Node Tree - Insert Right):
+```
+Input: root = [4], val = 7
+
+Output: [4,null,7]
+
+Explanation:
+7 > 4, attached to 4.right.
+```
+
+### Example 6 (Insert Smallest Value in BST):
+```
+Input: root = [4,2,7,1,3], val = 0
+
+Output: [4,2,7,1,3,0]
+
+Explanation:
+0 is smaller than all nodes, attached to the leftmost leaf 1.left.
+```
+
+### Example 7 (Insert Largest Value in BST):
+```
+Input: root = [4,2,7,1,3], val = 9
+
+Output: [4,2,7,1,3,null,null,null,null,null,9]
+
+Explanation:
+9 is larger than all nodes, attached to the rightmost leaf 7.right.
+```
+
+### Example 8 (Insert into Fully Left-Skewed Tree):
+```
+Input: root = [4,3,null,2], val = 1
+
+Tree:
+    4
+   /
+  3
+ /
+2
+/
+1
+
+Output: [4,3,null,2,null,1]
+```
+
+### Example 9 (Insert into Fully Right-Skewed Tree):
+```
+Input: root = [1,null,2,null,3], val = 4
+
+Output: [1,null,2,null,3,null,4]
+```
+
+### Example 10 (Insert Intermediate Value between Internal Nodes):
+```
+Input: root = [8,3,10,1,6], val = 4
+
+Tree after insertion:
+      8
+     / \
+    3   10
+   / \
+  1   6
+     /
+    4
+
+Output: [8,3,10,1,6,null,null,4]
+```
+
+---
+
 ## Constraints
-- 0 <= The number of nodes in the tree <= 10,000
-- -100,000,000 <= val, Node.val <= 100,000,000
-- All the values `Node.val` are unique
-- It is guaranteed that `val` does not exist in the original BST
+- The number of nodes in the tree is in the range `[0, 10,000]`.
+- `-100,000,000 <= val, Node.val <= 100,000,000`
+- All `Node.val` are **unique**.
+- It is **guaranteed** that `val` does not exist in the original BST.
 
 ---
 
 ## Pattern Recognition
 
-**Primary Pattern**: **BST Property-Guided Traversal + Leaf Insertion**
+**Primary Pattern**: **BST Property Navigation / Leaf Node Insertion**
 
 **Why This Pattern?**
-- A BST guarantees: left subtree values < node value < right subtree values
-- We can **navigate directly** to the correct insertion position in O(h) time
-- Every new node can always be inserted as a **leaf node** — no restructuring needed
+- BST structure dictates a unique path from root to the insertion point for any unique value.
+- By comparing `val` with the current node value:
+  - If `val < curr.val`, the new value must be placed in the left subtree.
+  - If `val > curr.val`, the new value must be placed in the right subtree.
+- When an empty slot (`null`) is found in the required direction, that empty slot is the exact valid location for the new leaf node.
 
-**Key Insight**:
-- If `val < current.val` → new node belongs in the **left subtree**
-- If `val > current.val` → new node belongs in the **right subtree**
-- When we reach a `null` child → that is the **correct insertion spot**
-
-**Pattern Breakdown:**
 ```
-At each node, compare val with current.val:
-├─ val < current.val  → go left
-│   ├─ If left is null → insert here
-│   └─ Else → recurse/iterate left
-├─ val > current.val  → go right
-│   ├─ If right is null → insert here
-│   └─ Else → recurse/iterate right
-└─ Always insert as a leaf node
+       BST Insertion Decision:
+       
+       if (val < curr.val):
+           if curr.left == null:
+               curr.left = new TreeNode(val)
+               break
+           curr = curr.left
+       else:
+           if curr.right == null:
+               curr.right = new TreeNode(val)
+               break
+           curr = curr.right
 ```
-
-**Related Patterns**:
-1. **Lowest Common Ancestor in BST** - Same BST navigation logic
-2. **Search in a Binary Search Tree** - Navigate left/right by comparing values
-3. **Delete Node in a BST** - Uses same traversal, more complex restructuring
-4. **Validate Binary Search Tree** - BST property verification
 
 ---
 
 ## Algorithm & Approach
 
-### Core Insight
+### Approach 1: Iterative Traversal ($O(1)$ Space) — Recommended / Optimal
 
-**Why Every Insertion Lands at a Leaf:**
-- In a BST, for any value `val`, there is exactly one position where it can be correctly placed
-- Following the BST property at each node, we are always guided to the unique correct empty slot
-- That slot is always a missing left or right child — i.e., a **leaf position**
+#### Method Explanation:
+1. Handle base case: If `root == null`, return `new TreeNode(val)`.
+2. Initialize pointer `curr = root`.
+3. Loop infinitely (`while (true)`):
+   - If `val < curr.val`:
+     - If `curr.left == null`, set `curr.left = new TreeNode(val)` and return `root`.
+     - Else, `curr = curr.left`.
+   - Else (`val > curr.val`):
+     - If `curr.right == null`, set `curr.right = new TreeNode(val)` and return `root`.
+     - Else, `curr = curr.right`.
 
-**Decision Flow:**
-```
-insertBST(root, val):
-    ├─ If root is null
-    │  └─ Return new TreeNode(val)  ← base case: found the insertion spot
-    │
-    ├─ If val < root.val
-    │  └─ root.left = insertBST(root.left, val)  ← go left
-    │
-    └─ If val > root.val
-       └─ root.right = insertBST(root.right, val)  ← go right
-    
-    Return root  ← return unchanged node back up the call stack
-```
-
-### Visual Understanding
-
-```
-Example: root = [5,3,9,1,4], val = 6
-
-        5           Step 1: val=6 > 5 → go right
-       / \
-      3   9         Step 2: val=6 < 9 → go left
-     / \
-    1   4           Step 3: root.left is null → INSERT here
-
-After Insertion:
-        5
-       / \
-      3   9
-     / \ /
-    1  4 6   ← new node 6 inserted as left child of 9
-```
-
-```
-Example: root = [5,3,6,null,4,null,10,null,null,7], val = 9
-
-        5           Step 1: val=9 > 5  → go right
-       / \
-      3   6         Step 2: val=9 > 6  → go right
-       \   \
-        4   10      Step 3: val=9 < 10 → go left
-           /
-          7         Step 4: val=9 > 7  → go right (null) → INSERT
-
-After Insertion:
-        5
-       / \
-      3   6
-       \   \
-        4   10
-           /
-          7
-           \
-            9   ← new node 9 inserted as right child of 7
-```
-
----
-
-### Step-by-Step Algorithm
-
-#### **Approach 1: Recursive (CLEAN & INTUITIVE)**
-
-**Core Idea**:
-- At each node, decide left or right using BST property
-- Recursively go down until reaching `null`
-- At `null`, create and return the new node
-- Returning back up the stack re-links the parent to the new subtree
-
-**Algorithm**:
-```
-insertIntoBST(root, val):
-    if root is null → return new TreeNode(val)
-    if val < root.val → root.left  = insertIntoBST(root.left,  val)
-    if val > root.val → root.right = insertIntoBST(root.right, val)
-    return root
-```
-
-**Code Implementation**
+#### Java Code Implementation:
 ```java
-class Solution {
+/**
+ * Definition for a binary tree node.
+ * public class TreeNode {
+ *     int val;
+ *     TreeNode left;
+ *     TreeNode right;
+ *     TreeNode() {}
+ *     TreeNode(int val) { this.val = val; }
+ *     TreeNode(int val, TreeNode left, TreeNode right) {
+ *         this.val = val;
+ *         this.left = left;
+ *         this.right = right;
+ *     }
+ * }
+ */
+public class InsertintoaBinarySearchTree {
+
+    /**
+     * Inserts a value into a BST and returns the root of the modified tree.
+     * 
+     * @param root The root node of the BST
+     * @param val The value to insert
+     * @return The root node of the BST after insertion
+     */
     public TreeNode insertIntoBST(TreeNode root, int val) {
-        // Base case: found the insertion spot (null child)
+        // Base case: If tree is empty, new node is the root
         if (root == null) {
             return new TreeNode(val);
         }
 
-        // val is smaller → insert into left subtree
-        if (val < root.val) {
-            root.left = insertIntoBST(root.left, val);
-        }
-        // val is larger → insert into right subtree
-        else {
-            root.right = insertIntoBST(root.right, val);
+        TreeNode curr = root;
+        while (true) {
+            if (val < curr.val) {
+                if (curr.left == null) {
+                    curr.left = new TreeNode(val);
+                    break;
+                }
+                curr = curr.left;
+            } else {
+                if (curr.right == null) {
+                    curr.right = new TreeNode(val);
+                    break;
+                }
+                curr = curr.right;
+            }
         }
 
-        // Return current node (unchanged) back up the call stack
         return root;
     }
 }
 ```
 
-**Example Walkthrough**
-
-Input: root = [5,3,9,1,4], val = 6
-
-```
-Call Stack Visualization:
-
-insertIntoBST(5, 6)
-├─ 6 > 5 → go right
-├─ root.right = insertIntoBST(9, 6)
-│  ├─ 6 < 9 → go left
-│  ├─ root.left = insertIntoBST(null, 6)
-│  │  └─ root is null → return new TreeNode(6) ✓
-│  ├─ node 9's left = node 6
-│  └─ return node 9
-├─ node 5's right = node 9 (unchanged)
-└─ return node 5 (root)
-
-Result: root unchanged, new node 6 added as left child of 9
-```
-
-**Step-by-Step Trace:**
-
-| Step | Current Node | val vs node.val | Decision |
-|------|-------------|----------------|----------|
-| 1 | 5 | 6 > 5 | Go right |
-| 2 | 9 | 6 < 9 | Go left |
-| 3 | null | — | Insert new node(6) here ✓ |
-
-**Final Result: [5,3,9,1,4,6]**
-
-**Complexity Analysis**
-- **Time Complexity**: O(h)
-  - h = height of the BST
-  - We traverse at most one root-to-leaf path
-  - Best case (balanced BST): O(log n)
-  - Worst case (skewed BST): O(n)
-- **Space Complexity**: O(h)
-  - Recursive call stack depth = height of traversal path
-  - Best case (balanced): O(log n)
-  - Worst case (skewed): O(n)
-
 ---
 
-#### **Approach 2: Iterative (OPTIMAL SPACE)**
+### Approach 2: Recursive DFS ($O(h)$ Call Stack Space) — Alternative
 
-**Core Idea**:
-- Use a `current` pointer to walk the BST
-- Track the `parent` node so we can attach the new node
-- When `current` becomes `null`, we've found the insertion spot
-- Attach the new node to the correct side of `parent`
+#### Method Explanation:
+1. If `root == null`, return `new TreeNode(val)`.
+2. If `val < root.val`, `root.left = insertIntoBST(root.left, val)`.
+3. If `val > root.val`, `root.right = insertIntoBST(root.right, val)`.
+4. Return `root`.
 
-**Why Iterative?**
-- Avoids recursive call stack — O(1) extra space
-- No risk of stack overflow for very deep/skewed trees
-- Same O(h) time complexity but better constant factor
-
-**Code Implementation**
+#### Java Code Implementation:
 ```java
-class Solution {
+public class InsertintoaBinarySearchTreeRecursive {
+
     public TreeNode insertIntoBST(TreeNode root, int val) {
-        // Edge case: empty tree
         if (root == null) {
             return new TreeNode(val);
         }
 
-        TreeNode current = root;
-
-        while (true) {
-            // val is smaller → go left
-            if (val < current.val) {
-                if (current.left == null) {
-                    current.left = new TreeNode(val);  // Insert here
-                    break;
-                }
-                current = current.left;
-            }
-            // val is larger → go right
-            else {
-                if (current.right == null) {
-                    current.right = new TreeNode(val);  // Insert here
-                    break;
-                }
-                current = current.right;
-            }
+        if (val < root.val) {
+            root.left = insertIntoBST(root.left, val);
+        } else {
+            root.right = insertIntoBST(root.right, val);
         }
 
-        return root;  // Root is always unchanged
+        return root;
     }
 }
 ```
 
-**Example Walkthrough**
+---
 
-Input: root = [5,3,6,null,4,null,10,null,null,7], val = 9
+## Why This Strategy?
+
+### Comparison of Approaches
+
+| Criteria | Iterative (Approach 1) | Recursive (Approach 2) |
+| :--- | :--- | :--- |
+| **Time Complexity** | $O(h)$ | $O(h)$ |
+| **Space Complexity** | $O(1)$ Auxiliary | $O(h)$ Call Stack |
+| **Stack Overflow Risk**| None | Possible if $h \ge 10,000$ (tree skewed) |
+| **Code Length** | ~18 lines | ~10 lines |
+| **Recommendation** | ⭐ **Top Choice ($O(1)$ Space)** | Clean alternative |
+
+---
+
+## Critical Edge Cases & Gotchas
+
+1. **Empty Tree (`root == null`)**:
+   - Must return `new TreeNode(val)` immediately so that the caller gets the newly created root.
+2. **Inserting into Single-Node Tree**:
+   - `curr.left` or `curr.right` will be null immediately, correctly attaching at depth 1.
+3. **Deep Skewed BST ($n = 10,000$)**:
+   - Recursive approach may cause `StackOverflowError` if $N = 10,000$; iterative approach uses $O(1)$ memory and handles deep trees safely.
+4. **Large Values (up to $10^8$)**:
+   - Values fit cleanly in standard 32-bit signed integers.
+5. **No Duplicate Values**:
+   - Guaranteed by problem statement that `val` does not exist in the original tree.
+
+---
+
+## Major Areas Where We Might Go Wrong
+
+### ❌ Mistake 1: Forgetting to Return the Root for Empty Tree
+```java
+// WRONG: Returning null when root is null
+if (root == null) return null; // ❌ Loses the inserted node!
+```
+**Correction**: Return `new TreeNode(val)`.
+
+---
+
+### ❌ Mistake 2: Losing Child Links in Iteration
+```java
+// WRONG: Overwriting curr without setting parent's left/right pointer
+while (curr != null) {
+    if (val < curr.val) curr = curr.left;
+    else curr = curr.right;
+}
+curr = new TreeNode(val); // ❌ Modifies local variable curr, does not attach to tree!
+```
+**Correction**: Check `curr.left == null` or `curr.right == null` before advancing, or track `parent`.
+
+---
+
+### ❌ Mistake 3: Inverting BST Comparison Logic
+```java
+// WRONG: Moving left when val is greater
+if (val > curr.val) curr.left = new TreeNode(val); // ❌ Violates BST invariant!
+```
+**Correction**: `val < curr.val` $\implies$ left, `val > curr.val` $\implies$ right.
+
+---
+
+## Complexity Analysis
+
+- **Time Complexity**: $O(h)$
+  - Balanced Tree: $h = O(\log n)$ comparisons.
+  - Skewed Tree (Worst Case): $h = O(n)$ comparisons where $n \le 10,000$.
+  - At each step, a single comparison is performed and one level is descended.
+- **Space Complexity**:
+  - **Iterative Approach**: $O(1)$ auxiliary space.
+  - **Recursive Approach**: $O(h)$ call stack space ($O(\log n)$ balanced, $O(n)$ skewed).
+
+---
+
+## Visualization
 
 ```
-BST Structure:
-        5
-       / \
-      3   6
-       \   \
-        4   10
-           /
-          7
+Insert val = 6 into BST:
+             5
+           /   \
+          3     9
+         / \
+        1   4
 
-Iteration Trace:
+Step 1: curr = 5
+        6 > 5 -> curr.right is 9 (not null) -> curr = 9
 
-current = 5  → 9 > 5  → go right,  right exists
-current = 6  → 9 > 6  → go right,  right exists
-current = 10 → 9 < 10 → go left,   left exists
-current = 7  → 9 > 7  → go right,  right is null → INSERT 9 here
+Step 2: curr = 9
+        6 < 9 -> curr.left is null!
+        Set 9.left = new TreeNode(6)
+        Break and return root (5).
 
-Result: node 9 added as right child of node 7
+Result:
+             5
+           /   \
+          3     9
+         / \   /
+        1   4 6
 ```
-
-**Iteration Table:**
-
-| Iteration | current | val vs current.val | Direction | Child exists? |
-|-----------|---------|-------------------|-----------|--------------|
-| 1 | 5 | 9 > 5 | Right | Yes → continue |
-| 2 | 6 | 9 > 6 | Right | Yes → continue |
-| 3 | 10 | 9 < 10 | Left | Yes → continue |
-| 4 | 7 | 9 > 7 | Right | No → **Insert!** |
-
-**Final Result: [5,3,6,null,4,null,10,null,null,7,null,null,9]**
-
-**Complexity Analysis**
-- **Time Complexity**: O(h) — same as recursive
-- **Space Complexity**: O(1) — only pointer variables, no call stack
 
 ---
 
 ## Comparison of Approaches
 
-| Aspect | Recursive | Iterative |
-|--------|-----------|-----------|
-| **Time Complexity** | O(h) | O(h) |
-| **Space Complexity** | O(h) | ✅ O(1) |
-| **Code Simplicity** | ✅ Very Simple | Simple |
-| **Stack Overflow Risk** | Possible (very deep tree) | ✅ None |
-| **Return Value** | Returns root via call stack | Returns root directly |
-| **Preferred?** | ✅ Great for interviews | ✅ Best for production |
-
-**Recommendation**: Use **Recursive** in interviews (clean, easy to explain). Use **Iterative** in production (better space, no stack risk with 10,000 nodes).
+```
++-------------------+---------------------+-----------------------+
+| Metric            | Iterative Solution  | Recursive Solution    |
++-------------------+---------------------+-----------------------+
+| Time Complexity   | O(h)                | O(h)                  |
+| Space Complexity  | O(1)                | O(h)                  |
+| Memory Location   | Pointer only (heap) | Call stack per level  |
+| Stack Safety      | 100% Safe           | Risk on N=10,000      |
++-------------------+---------------------+-----------------------+
+```
 
 ---
 
 ## Key Takeaways
 
-1. **Always Insert at a Leaf**
-   - A new BST node always lands at a `null` child slot
-   - No restructuring or rotation is ever needed
-   - This is what makes BST insertion simple and O(h)
-
-2. **BST Property Guides the Path**
-   - `val < node.val` → always go left
-   - `val > node.val` → always go right
-   - The path is deterministic — no backtracking needed
-
-3. **Recursive Return Value is the Trick**
-   - Returning `root` back up the call stack automatically re-links the tree
-   - When `null` is reached, `new TreeNode(val)` is returned and linked to its parent
-
-4. **Root Never Changes (in Standard Insertion)**
-   - Leaf insertion never displaces the existing root
-   - Always safe to return the original `root`
-
-5. **Multiple Valid Answers**
-   - The problem allows any valid BST after insertion
-   - The standard leaf insertion is the simplest valid approach
+1. **Leaf Insertion is Sufficient**: Any valid BST insertion can always be placed as a leaf without needing tree rotations.
+2. **One-Way Traversal**: Because `val` is unique, there is exactly one deterministic path down the tree to the insertion leaf position.
+3. **$O(1)$ Space Iterative Pattern**: Checking `curr.left == null` / `curr.right == null` allows immediate attachment without needing a separate parent pointer.
 
 ---
 
-## Common Pitfalls
+## Interview Tips
 
-❌ **Mistake 1**: Forgetting to assign the recursive return value
-```java
-// WRONG: new node is created but never linked
-if (val < root.val) insertIntoBST(root.left, val);
-```
-✅ **Correct**: Assign result back to the child
-```java
-if (val < root.val) root.left = insertIntoBST(root.left, val);
-```
-
-❌ **Mistake 2**: Not returning `root` at the end of recursion
-```java
-// WRONG: parent loses reference to the subtree
-if (val < root.val) {
-    root.left = insertIntoBST(root.left, val);
-}
-// forgot to return root!
-```
-✅ **Correct**: Always return current node
-```java
-if (val < root.val) root.left = insertIntoBST(root.left, val);
-else root.right = insertIntoBST(root.right, val);
-return root;  // ← critical!
-```
-
-❌ **Mistake 3**: Using `==` comparison instead of `<` / `>`
-```java
-// WRONG: only handles exact match (which can't happen per constraints)
-if (root.val == val) return root;
-```
-✅ **Correct**: Navigate by less-than / greater-than
-```java
-if (val < root.val) root.left  = insertIntoBST(root.left,  val);
-else               root.right = insertIntoBST(root.right, val);
-```
-
-❌ **Mistake 4**: In iterative version, not returning original root
-```java
-// WRONG: returns the node where insertion happened, not the root
-return current;
-```
-✅ **Correct**: Save and return original root
-```java
-TreeNode current = root;
-// ... loop ...
-return root;  // original root, always unchanged
-```
+- **How to explain**:
+  > *"To insert a value into a BST while preserving the BST invariant, we can traverse down the tree from the root. At each node, we compare `val` with `curr.val`: if `val < curr.val`, we move left, and if `val > curr.val`, we move right. When we find an empty child pointer in the chosen direction, we attach the new `TreeNode(val)` as a leaf. An iterative implementation achieves this in $O(h)$ time and $O(1)$ space."*
+- **Follow-up question**: "Could we insert the new node at the root instead of a leaf?"
+  - *Answer*: "Yes, using tree rotations or by restructuring the tree, but leaf insertion is simpler, preserves existing topology, and achieves the same $O(h)$ complexity."
 
 ---
 
 ## Related Problems
 
-1. **Lowest Common Ancestor in BST** (Medium) - Same BST navigation pattern
-2. **Search in a Binary Search Tree** (Easy) - Core BST left/right navigation
-3. **Delete Node in a BST** (Medium) - Insert's counterpart, more complex restructuring
-4. **Validate Binary Search Tree** (Medium) - Verify BST property holds
-5. **Kth Smallest Element in a BST** (Medium) - In-order traversal of BST
-6. **Construct BST from Preorder Traversal** (Medium) - Builds BST using repeated insertion
+| Problem | Difficulty | Relation |
+| :--- | :--- | :--- |
+| **Search in a Binary Search Tree** | Easy | Same navigation without the insertion step. |
+| **Delete Node in a BST** | Medium | Inverse operation; requires handling node replacement with predecessor/successor. |
+| **Kth Smallest Element in a BST** | Medium | Inorder traversal of BST. |
+| **Validate Binary Search Tree** | Medium | Validates the BST property across all nodes. |
 
 ---
 
-## Edge Cases to Consider
+## Final Pattern Label
 
-1. **Empty Tree (root = null)**
-   ```
-   Input: root = [], val = 5
-   Result: [5]  ← new node becomes the root
-   ```
+✅ **BST Binary Navigation & Leaf Insertion**
 
-2. **Insert Smaller than All Nodes (goes all the way left)**
-   ```
-   Input: root = [5,3,9,1,4], val = 0
-   Path: 0 < 5 → left, 0 < 3 → left, 0 < 1 → left (null) → insert
-   Result: 0 becomes left child of 1
-   ```
-
-3. **Insert Larger than All Nodes (goes all the way right)**
-   ```
-   Input: root = [5,3,9,1,4], val = 100
-   Path: 100 > 5 → right, 100 > 9 → right (null) → insert
-   Result: 100 becomes right child of 9
-   ```
-
-4. **Insert into Single-Node Tree**
-   ```
-   Input: root = [5], val = 3
-   Path: 3 < 5 → left (null) → insert
-   Result: [5,3]  ← 3 becomes left child of 5
-   ```
-
-5. **Insert Directly Adjacent to Root**
-   ```
-   Input: root = [5,3,9], val = 7
-   Path: 7 > 5 → right (9), 7 < 9 → left (null) → insert
-   Result: 7 becomes left child of 9
-   ```
-
-6. **Skewed Tree (worst case — O(n) depth)**
-   ```
-   Input: root = [1,null,2,null,3,null,4], val = 5
-   Path: 5 > 1 → right, 5 > 2 → right, 5 > 3 → right, 5 > 4 → right (null) → insert
-   Result: 5 becomes right child of 4
-   ```
-
----
-
-## Summary
-
-**Problem**: Insert a value into a BST and return the root of the updated tree.
-
-**Solution**:
-- Use BST property to navigate: go left if `val < node.val`, right if `val > node.val`
-- When a `null` child is reached, that is the correct insertion spot
-- Create a new leaf node there and return the root
-
-**Time**: O(h) | **Space**: O(h) recursive / O(1) iterative
-
-**Pattern**: BST property-guided leaf insertion — every new value always lands at a leaf, no restructuring needed. The same left/right navigation used in BST search applies directly here.
-
+**Summary**: Traverse down the BST comparing `val` against node values. When a `null` child is encountered in the required direction (`left` if smaller, `right` if larger), attach `new TreeNode(val)` as a leaf and return the root in $O(h)$ time and $O(1)$ space.
