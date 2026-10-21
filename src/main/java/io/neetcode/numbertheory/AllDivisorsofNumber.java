@@ -20,11 +20,10 @@ public class AllDivisorsofNumber {
         for (int i = 1; i <= n / i; i++) {
             if (n % i == 0) {
                 int match = n / i;
+                res.add(i);
                 if (match != i) {
-                    res.add(i);
                     res.add(match);
-                } else
-                    res.add(i);
+                }
             }
         }
         return res;

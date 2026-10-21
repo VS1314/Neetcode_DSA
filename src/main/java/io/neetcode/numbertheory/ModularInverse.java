@@ -66,7 +66,6 @@ public class ModularInverse {
         long oldR = modulus, r = a % modulus, oldX = 0, x = 1;
         while (r != 0) {
             long quotient = oldR / r;
-            ;
 
             long nextR = oldR - quotient * r;
             long nextX = oldX - quotient * x;
